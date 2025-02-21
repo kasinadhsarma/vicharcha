@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { executeQuery } from "@/lib/cassandra"
-import { v4 as uuidv4 } from "uuid"
-import { createOTP, verifyOTP } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,9 +16,16 @@ export async function POST(req: NextRequest) {
     const existingUsername = await executeQuery(
       "SELECT id FROM social_network.users WHERE username = ? ALLOW FILTERING",
       [username]
-    ) || { rowLength: 0, rows: [] }
+    )
 
-    if (existingUsername.rowLength > 0) {
+    if (!existingUsername.success) {
+      return NextResponse.json(
+        { error: existingUsername.error || "Database error" },
+        { status: 500 }
+      )
+    }
+
+    if ((existingUsername.count || 0) > 0) {
       return NextResponse.json(
         { error: "Username already taken" },
         { status: 409 }
@@ -31,9 +36,16 @@ export async function POST(req: NextRequest) {
     const pendingUser = await executeQuery(
       "SELECT id FROM social_network.pending_users WHERE phone_number = ? ALLOW FILTERING",
       [phoneNumber]
-    ) || { rowLength: 0, rows: [] }
+    )
 
-    if (pendingUser.rowLength === 0) {
+    if (!pendingUser.success) {
+      return NextResponse.json(
+        { error: pendingUser.error || "Database error" },
+        { status: 500 }
+      )
+    }
+
+    if ((pendingUser.count || 0) === 0 || !pendingUser.rows?.length) {
       return NextResponse.json(
         { error: "No pending registration found" },
         { status: 404 }
@@ -60,7 +72,14 @@ export async function POST(req: NextRequest) {
     const userData = await executeQuery(
       "SELECT id, username, phone_number, is_verified FROM social_network.users WHERE id = ?",
       [userId]
-    ) || { rowLength: 0, rows: [{}] }
+    )
+
+    if (!userData.success || !userData.rows?.length) {
+      return NextResponse.json(
+        { error: userData.error || "Failed to retrieve user data" },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ 
       success: true,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { executeQuery } from "@/lib/db"
+import { executeQuery } from "@/lib/cassandra"
 import { digilocker } from "@/lib/digilocker-service"
 import { ApiResponse, DatabaseResult, DBUser, DigiLockerDocument, DigiLockerAuth } from "@/lib/types"
 
@@ -22,17 +22,37 @@ export async function POST(req: NextRequest) {
     const isDevelopment = process.env.NODE_ENV === 'development'
     let verificationResult;
 
+    // Get access token from headers
+    const accessToken = req.headers.get('authorization')?.split(' ')[1];
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "Authorization token is required" },
+        { status: 401 }
+      );
+    }
+
     if (isDevelopment) {
-      // Use mock verification in development
-      verificationResult = await digilocker.mockVerifyUser(userId)
+      // Mock response in development
+      verificationResult = {
+        verified: true,
+        documents: [{
+          id: 'mock-doc-1',
+          type: 'mock-type',
+          name: 'Mock Document',
+          date: new Date().toISOString(),
+          issuer: 'Mock Issuer',
+          uri: 'mock-uri',
+          verificationStatus: 'verified' as const
+        }]
+      };
     } else {
-      // Verify specific document in production
-      const isVerified = await digilocker.verifyDocument(documentId)
-      const documents = await digilocker.getDocuments(userId)
+      // Verify document in production
+      const isVerified = await digilocker.verifyDocument(accessToken, documentId);
+      const documents = await digilocker.getUserDocuments(accessToken);
       verificationResult = {
         verified: isVerified,
         documents
-      }
+      };
     }
 
     if (verificationResult.verified) {
@@ -114,7 +134,7 @@ export async function GET(req: NextRequest) {
         'SELECT * FROM social_network.digilocker_auth WHERE user_id = ?',
         [userId]
       ) as DatabaseResult
-      documents = docsResult?.rows || []
+      documents = (docsResult?.rows || []) as DigiLockerAuth[]
     }
 
     const response: DigiLockerVerifyResponse = {

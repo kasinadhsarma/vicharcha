@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createReel, getReels } from '@/lib/db';
+import { getStories as getReels, createReel } from '@/lib/db/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,12 +33,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const reelId = await createReel(
+    const reelId = await createReel({
       userId,
       videoUrl,
       thumbnailUrl,
       caption
-    );
+    });
 
     return NextResponse.json({ 
       reelId, 

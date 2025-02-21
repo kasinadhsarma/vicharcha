@@ -76,7 +76,7 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
     }
   };
 
-  const handleVideoError = (error: any) => {
+  const handleVideoError = (error: React.SyntheticEvent<HTMLVideoElement, Event>) => {
     console.error('Video error:', error);
     toast({
       variant: "destructive",
@@ -112,12 +112,12 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-[450px] h-[90vh] p-0 overflow-hidden bg-white">
+      <DialogContent className="max-w-[450px] h-[90vh] p-0 overflow-hidden bg-background border-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full h-full bg-black overflow-hidden rounded-lg"
+          className="relative w-full h-full bg-black/95 dark:bg-black overflow-hidden rounded-lg"
         >
           {/* Progress bars */}
           <div className="absolute top-0 left-0 right-0 z-20 p-2 flex gap-1">
@@ -165,7 +165,7 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
             )}
 
             {/* Overlay controls */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50">
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 dark:from-black/60 dark:to-black/60">
               {/* Header */}
               <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">

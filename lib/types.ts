@@ -80,6 +80,12 @@ export interface Story {
     url: string;
     type: 'image' | 'video';
   };
+  username: string;
+  userImage: string;
+  isPremium: boolean;
+  isViewed: boolean;
+  mediaUrl: string;
+  downloadable: boolean;
 }
 
 export interface Comment {
@@ -100,4 +106,78 @@ export interface Reaction {
   createdAt: string;
 }
 
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+}
+
+export interface DatabaseResult<T = unknown, R = T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  count?: number;
+  rows?: R[];
+}
+
+// Common database response types
+export interface DigiLockerVerifyResponse {
+  userId: string;
+  documentId: string;
+  verified: boolean;
+  timestamp: string;
+}
+
+// User-related types
+export interface DBUser extends User {
+  id: string;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+  isVerified: boolean;
+  digilocker_verified: boolean;
+  role: 'user' | 'admin';
+  settings?: UserSettings;
+}
+
 export type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+
+// Message and Chat types
+export interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  chatId: string;
+  createdAt: Date;
+  status: 'sent' | 'delivered' | 'read';
+}
+
+export interface ParticipantDetails {
+  id: string;
+  name: string;
+  avatar: string;
+  status: 'online' | 'offline';
+  lastSeen: string;
+  isPremium: boolean;
+}
+
+export interface IndividualChat {
+  id: string;
+  name: string;
+  avatar: string;
+  participants: string[];
+  participantDetails: ParticipantDetails[];
+  status: 'online' | 'offline';
+  isTyping: boolean;
+  isGroup: boolean;
+  lastMessage: Message;
+  unreadCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type ChatWithDetails = IndividualChat;
+
+// Re-export DigiLocker types
+export type { DigiLockerDocument, DigiLockerAuth } from './digilocker-service';

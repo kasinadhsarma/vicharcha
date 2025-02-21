@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Clock, TrendingUp, Star, Users, Filter, MessageSquare, Share } from "lucide-react";
@@ -195,11 +196,13 @@ function MainContent({ category, showStories = false }: MainContentProps) {
                     <div className="whitespace-pre-wrap">{post.content}</div>
                     {post.mediaUrls?.length > 0 && (
                       <div className="grid gap-2 mt-2">
-                        {post.mediaUrls.map((url, i) => (
-                          <img 
-                            key={i}
+                        {post.mediaUrls.map((url, index) => (
+                          <Image 
+                            key={index}
                             src={url} 
                             alt="Post media"
+                            width={800}
+                            height={600}
                             className="rounded-lg max-h-96 w-full object-cover"
                           />
                         ))}

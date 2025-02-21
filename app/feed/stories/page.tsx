@@ -69,10 +69,10 @@ export default function StoriesPage() {
   }, [stories.length]);
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 py-6 bg-white text-black">
+    <div className="max-w-xl mx-auto space-y-6 py-6 bg-background text-foreground">
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-rose-500/5 via-purple-500/5 to-blue-500/5 rounded-xl blur-xl" />
-        <ScrollArea className="w-full whitespace-nowrap rounded-xl border border-gray-100 bg-white/50 backdrop-blur-sm">
+        <ScrollArea className="w-full whitespace-nowrap rounded-xl border bg-background/50 backdrop-blur-sm">
           <div className="flex w-max space-x-4 p-4">
             <CreateStory onStoryCreated={fetchStories} />
 

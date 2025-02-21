@@ -76,7 +76,7 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
   return (
     <>
       <motion.button
-        className="flex flex-col items-center space-y-1 relative group text-gray-900"
+        className="flex flex-col items-center space-y-1 relative group text-foreground"
         onClick={() => setIsOpen(true)}
         aria-label="Add your story"
       >
@@ -90,13 +90,13 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
             </Avatar>
           </div>
         </div>
-        <span className="text-xs font-medium text-gray-900">Your Story</span>
+        <span className="text-xs font-medium text-foreground">Your Story</span>
       </motion.button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-white">
+        <DialogContent className="sm:max-w-[425px] bg-background border">
           <DialogHeader>
-            <DialogTitle>Create New Story</DialogTitle>
+            <DialogTitle className="text-foreground">Create New Story</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="flex flex-col items-center gap-4">
@@ -119,7 +119,7 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
               ) : (
                 <Button
                   variant="outline"
-                  className="w-full h-[200px] border-dashed"
+                  className="w-full h-[200px] border-dashed border-muted-foreground/20"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="h-6 w-6 mr-2" />

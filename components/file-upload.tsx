@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 
 interface FileUploadProps {
@@ -20,7 +19,6 @@ export function FileUpload({
   accept,
   maxSize = 5 * 1024 * 1024, // 5MB default
   className,
-  allowedTypes
 }: FileUploadProps) {
   const [error, setError] = useState<string | null>(null);
 

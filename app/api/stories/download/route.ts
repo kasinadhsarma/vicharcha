@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Configure route segment config
 export const dynamic = 'force-dynamic';
-import { getStories } from '@/lib/db';
+import { getStories } from '@/lib/db/db';
 
 export async function GET(request: NextRequest) {
   try {

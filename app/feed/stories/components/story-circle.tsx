@@ -33,7 +33,7 @@ const getTimeElapsed = (date: string | Date) => {
 export function StoryCircle({ story, onPress }: StoryCircleProps) {
   return (
     <motion.button
-      className="flex flex-col items-center space-y-1 relative group text-gray-900"
+      className="flex flex-col items-center space-y-1 relative group text-foreground"
       variants={storyVariants}
       initial="initial"
       animate="animate"
@@ -64,8 +64,8 @@ export function StoryCircle({ story, onPress }: StoryCircleProps) {
         )}
       </div>
       <div className="flex flex-col items-center">
-        <span className="text-xs font-medium text-gray-900">{story.username || 'User'}</span>
-        <span className="text-[10px] text-gray-500">
+        <span className="text-xs font-medium text-foreground">{story.username || 'User'}</span>
+        <span className="text-[10px] text-muted-foreground">
           {getTimeElapsed(story.createdAt)}
         </span>
       </div>
@@ -76,10 +76,10 @@ export function StoryCircle({ story, onPress }: StoryCircleProps) {
 export function StoryCircleSkeleton() {
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="w-[66px] h-[66px] rounded-full bg-gray-100 animate-pulse" />
+      <div className="w-[66px] h-[66px] rounded-full bg-muted animate-pulse" />
       <div className="space-y-1">
-        <div className="w-12 h-2 bg-gray-100 animate-pulse rounded" />
-        <div className="w-8 h-2 bg-gray-100 animate-pulse rounded" />
+        <div className="w-12 h-2 bg-muted animate-pulse rounded" />
+        <div className="w-8 h-2 bg-muted animate-pulse rounded" />
       </div>
     </div>
   );

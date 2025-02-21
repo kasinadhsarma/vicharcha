@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createStory } from '@/lib/db';
+import { createStory } from '@/lib/db/db';
 import { uploadFile } from '@/lib/storage';
 
 const saveStoryFile = async (file: File): Promise<string> => {
-  const filename = `stories/${crypto.randomUUID()}-${file.name}`;
-  const url = await uploadFile(file, filename);
-  return url;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const uniqueId = crypto.randomUUID();
+  const filename = `${uniqueId}-${file.name}`;
+  
+  return uploadFile(buffer, {
+    filename,
+    mimetype: file.type,
+    folder: 'stories'
+  });
 };
 
 export async function POST(request: NextRequest) {
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
           id: crypto.randomUUID(),
           url,
           type,
-          duration: type === 'video' ? 10 : undefined
+          duration: type === 'video' ? 10 : 5
         };
       })
     );

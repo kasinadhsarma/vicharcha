@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { findUserByPhone, verifyOTP } from '@/lib/db/db';
+import { DBUser } from '@/lib/types';
 
 // Make route dynamic
 export const dynamic = 'force-dynamic';
-
-import { findUserByPhone, verifyOTP } from '@/lib/db';
-import type { User } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user exists
-    const user = await findUserByPhone(phoneNumber);
+    const user = await findUserByPhone(phoneNumber) as DBUser;
 
     if (!user) {
       return NextResponse.json(
@@ -59,7 +58,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const user = await findUserByPhone(phoneNumber);
+    const user = await findUserByPhone(phoneNumber) as DBUser;
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
