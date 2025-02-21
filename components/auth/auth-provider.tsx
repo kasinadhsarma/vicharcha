@@ -1,80 +1,78 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+'use client';
+
+import React, { createContext, useContext, useState, useCallback } from 'react';
+
 import { User } from '@/lib/types';
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
-  login: (credentials: any) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  isLoading: false,
+  error: null,
+  login: async () => {},
+  logout: async () => {},
+});
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
-
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Check if user is logged in
-    checkAuthStatus();
+  const login = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const userData = await response.json();
+      setUser(userData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  async function checkAuthStatus() {
+  const logout = useCallback(async () => {
+    setIsLoading(true);
     try {
-      // Add your auth status check logic here
-      setLoading(false);
-    } catch (error) {
-      console.error('Auth status check failed:', error);
-      setLoading(false);
-    }
-  }
-
-  async function login(credentials: any) {
-    try {
-      // Add your login logic here
-      const user = {
-        id: '1',
-        name: 'Test User',
-        email: 'test@example.com',
-        image: '/placeholder-user.jpg',
-        avatar: '/placeholder-user.jpg',
-        phoneNumber: '+1234567890'
-      };
-      setUser(user);
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
-    }
-  }
-
-  async function logout() {
-    try {
-      // Add your logout logic here
+      await fetch('/api/auth', { method: 'DELETE' });
       setUser(null);
-    } catch (error) {
-      console.error('Logout failed:', error);
-      throw error;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Logout failed');
+    } finally {
+      setIsLoading(false);
     }
-  }
+  }, []);
 
-  const value = {
-    user,
-    loading,
-    login,
-    logout,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        error,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
+
+export const useAuth = () => useContext(AuthContext);

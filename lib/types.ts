@@ -17,17 +17,47 @@ export interface User {
   avatar?: string;
 }
 
+// Navigation preferences
+export interface NavigationPreferences {
+  bottomNavItems: string[];  // Array of navigation item hrefs
+  sidebarItems: string[];   // Array of navigation item hrefs
+  quickAccessItems: string[]; // Items shown in quick access section
+}
+
+export interface UserSettings {
+  theme: 'light' | 'dark' | 'system';
+  colorTheme: string;
+  language?: string;
+  privacy?: {
+    adultContent: boolean;
+    publicProfile: boolean;
+  };
+  navigation: NavigationPreferences;
+}
+
 export interface Post {
   id: string;
-  title: string;
+  userId: string;
+  username: string;
+  userImage: string;
   content: string;
-  authorId: string;
-  author?: User;
+  category: string;
+  mediaUrls: string[];
+  tokens: number;
+  mentions: string[];
+  hashtags: string[];
+  emojis: string[];
+  likes: number;
+  comments: number;
+  shares: number;
   createdAt: string;
   updatedAt: string;
-  category: string;
-  tags?: string[];
-  attachments?: Attachment[];
+  timestamp: string;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  isVerified: boolean;
+  isPremium: boolean;
+  ageRestricted: boolean;
 }
 
 export interface Attachment {
@@ -70,5 +100,4 @@ export interface Reaction {
   createdAt: string;
 }
 
-// Button variant type
 export type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";

@@ -1,69 +1,46 @@
-import { useCallback, useEffect, useState } from 'react'
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import type { UserSettings } from '@/lib/types'
 
-export interface Settings {
-  darkMode: boolean
-  notifications: boolean
-  autoplay: boolean
-  quality: 'auto' | 'low' | 'medium' | 'high'
-  language: string
-  isAdultContentEnabled: boolean
+type State = {
+  settings: UserSettings;
+  updateSettings: (updates: Partial<UserSettings>) => void;
 }
 
-const defaultSettings: Settings = {
-  darkMode: false,
-  notifications: true,
-  autoplay: true,
-  quality: 'auto',
-  language: 'en',
-  isAdultContentEnabled: false
-}
-
-export function useSettings() {
-  const [settings, setSettings] = useState<Settings>(defaultSettings)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const loadSettings = () => {
-      try {
-        const savedSettings = localStorage.getItem('app-settings')
-        if (savedSettings) {
-          setSettings(JSON.parse(savedSettings))
+export const useSettings = create<State>()(
+  persist(
+    (set) => ({
+      settings: {
+        theme: 'system',
+        colorTheme: 'blue',
+        privacy: {
+          adultContent: false,
+          publicProfile: true
+        },
+        navigation: {
+          bottomNavItems: ["/", "/messages", "/reels", "/calls"],
+          sidebarItems: [
+            "/",
+            "/messages",
+            "/reels",
+            "/calls",
+            "/ai-assistant",
+            "/research",
+            "/social",
+            "/shopping",
+            "/emergency",
+            "/payments"
+          ],
+          quickAccessItems: ["/", "/messages", "/reels"]
         }
-      } catch (error) {
-        console.error('Failed to load settings:', error)
-      } finally {
-        setLoading(false)
-      }
+      },
+      updateSettings: (updates) =>
+        set((state) => ({
+          settings: { ...state.settings, ...updates },
+        })),
+    }),
+    {
+      name: 'user-settings', // Key for localStorage
     }
-
-    loadSettings()
-  }, [])
-
-  const updateSettings = useCallback((newSettings: Partial<Settings>) => {
-    setSettings(current => {
-      const updated = { ...current, ...newSettings }
-      try {
-        localStorage.setItem('app-settings', JSON.stringify(updated))
-      } catch (error) {
-        console.error('Failed to save settings:', error)
-      }
-      return updated
-    })
-  }, [])
-
-  const resetSettings = useCallback(() => {
-    setSettings(defaultSettings)
-    try {
-      localStorage.setItem('app-settings', JSON.stringify(defaultSettings))
-    } catch (error) {
-      console.error('Failed to reset settings:', error)
-    }
-  }, [])
-
-  return {
-    settings,
-    updateSettings,
-    resetSettings,
-    loading
-  }
-}
+  )
+)

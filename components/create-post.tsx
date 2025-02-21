@@ -271,7 +271,7 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                         <SelectItem value={PostCategories.SPORTS}>Sports</SelectItem>
                         <SelectItem value={PostCategories.TECHNOLOGY}>Technology</SelectItem>
                         <SelectItem value={PostCategories.POLITICS}>Politics</SelectItem>
-                        {settings?.isAdultContentEnabled && (
+                        {settings?.privacy?.adultContent && (
                           <SelectItem value={PostCategories.ADULT}>Adult Content (18+)</SelectItem>
                         )}
                       </SelectContent>
