@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button, type ButtonProps } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -10,14 +10,14 @@ import { useAuth } from "@/components/auth/auth-provider"
 import { FileUpload } from "@/components/file-upload"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
-import { Image, X, Sparkles, Loader2, Music, Hash, AtSign } from "lucide-react"
+import { Image as ImageIcon, X, Sparkles, Loader2, Music, Hash } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { PostCategories, Post } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { PostCategories, Post } from "../lib/types"
+import { cn } from "../lib/utils"
+import Image from "next/image"
 import { useSettings } from "@/hooks/use-settings"
 
 const TOKEN_LIMIT = 500;
@@ -127,8 +127,8 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
       });
       return;
     }
-    // In a real app, implement file upload to storage and get URL
-    const url = `/placeholder-${Date.now()}.jpg`
+    // Create a temporary URL for the uploaded file
+    const url = URL.createObjectURL(file)
     setMediaUrls([...mediaUrls, url])
   }
 
@@ -323,10 +323,12 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                       <div className="flex flex-wrap gap-2">
                         {mediaUrls.map((url, index) => (
                           <div key={index} className="relative group">
-                            <img
+                            <Image
                               src={url}
-                              alt=""
-                              className="w-20 h-20 object-cover rounded-lg"
+                              alt="Media preview"
+                              width={80}
+                              height={80}
+                              className="object-cover rounded-lg"
                             />
                             <button
                               onClick={() => setMediaUrls(mediaUrls.filter((_, i) => i !== index))}
@@ -352,7 +354,7 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                             className="h-9 w-9 rounded-full"
                             disabled={isLoading || mediaUrls.length >= 5}
                           >
-                            <Image className="h-5 w-5" />
+                            <ImageIcon className="h-5 w-5" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -434,10 +436,12 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                                     className="flex items-center gap-2"
                                   >
                                     {song.albumArt && (
-                                      <img 
-                                        src={song.albumArt} 
-                                        alt={song.title}
-                                        className="w-8 h-8 rounded object-cover"
+                                      <Image 
+                                        src={song.albumArt || ""} 
+                                        alt={`Album art for ${song.title}`}
+                                        width={32}
+                                        height={32}
+                                        className="rounded object-cover"
                                       />
                                     )}
                                     <div className="flex flex-col">

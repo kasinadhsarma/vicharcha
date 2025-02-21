@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { NavItem } from "@/components/sidebar/NavItem"
 import { UserMenu } from "@/components/sidebar/UserMenu"
 import { SidebarLogo } from "./SidebarLogo"
-import { navItems, profileItems } from "@/constants/navItems"
+import { navItems } from "@/constants/navItems"
 import {
   Sheet,
   SheetTrigger,

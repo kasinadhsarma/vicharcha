@@ -1,7 +1,7 @@
 "use client"
 
 import { useSettings } from "@/hooks/use-settings"
-import { navItems } from "@/constants/navItems"
+import { navItems, NavItem } from "@/constants/navItems"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -12,7 +12,7 @@ export function NavigationSettings() {
   const handleQuickAccessToggle = (href: string) => {
     const currentItems = settings.navigation.quickAccessItems
     const newItems = currentItems.includes(href)
-      ? currentItems.filter(item => item !== href)
+      ? currentItems.filter((item: string) => item !== href)
       : [...currentItems, href].slice(0, 4) // Limit to 4 items
     
     updateSettings({
@@ -26,7 +26,7 @@ export function NavigationSettings() {
   const handleBottomNavToggle = (href: string) => {
     const currentItems = settings.navigation.bottomNavItems
     const newItems = currentItems.includes(href)
-      ? currentItems.filter(item => item !== href)
+      ? currentItems.filter((item: string) => item !== href)
       : [...currentItems, href].slice(0, 4) // Limit to 4 items
     
     updateSettings({
@@ -47,7 +47,7 @@ export function NavigationSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {navItems.map((item) => (
+          {navItems.map((item: NavItem) => (
             <div key={item.href} className="flex items-center space-x-2">
               <Checkbox 
                 id={`quick-${item.href}`}
@@ -72,7 +72,7 @@ export function NavigationSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          {navItems.map((item) => (
+          {navItems.map((item: NavItem) => (
             <div key={item.href} className="flex items-center space-x-2">
               <Checkbox 
                 id={`bottom-${item.href}`}

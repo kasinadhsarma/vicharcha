@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -14,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/components/auth/auth-provider"
 import { useTheme } from "next-themes"
-import { LogOut, Settings, Sun, Moon, User, UserCog } from "lucide-react"
+import { LogOut, Sun, Moon, User, UserCog } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface UserMenuProps {

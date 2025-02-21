@@ -43,7 +43,6 @@ export function SidebarReels() {
 }
 
 function Reel({
-  id,
   username,
   userImage,
   video,

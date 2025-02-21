@@ -8,15 +8,15 @@ import { motion } from "framer-motion"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { user, loading } = useAuth()
+  const { user, isLoading } = useAuth()
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!isLoading && user) {
       router.push("/")
     }
-  }, [user, loading, router])
+  }, [user, isLoading, router])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
         <div className="animate-pulse flex flex-col items-center space-y-4">

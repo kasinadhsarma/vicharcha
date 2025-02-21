@@ -3,7 +3,7 @@
 import * as React from "react"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Menu, X, Bell, Search } from "lucide-react"
+import { Menu, Bell, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { NavItem } from "@/components/sidebar/NavItem"
 import { UserMenu } from "@/components/sidebar/UserMenu"
@@ -24,7 +24,7 @@ export function MobileNavigation() {
 
   // Get drawer menu items
   const drawerItems = settings.navigation.sidebarItems
-    .filter(href => !settings.navigation.bottomNavItems.includes(href))
+    .filter((href: string) => !settings.navigation.bottomNavItems.includes(href))
     .map(href => navItems.find(item => item.href === href))
     .filter((item): item is NavItemType => Boolean(item))
 

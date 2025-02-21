@@ -1,19 +1,13 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react";
-import { useResponsive } from "@/hooks/use-responsive";
-import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Clock, TrendingUp, Star, Users, Filter } from "lucide-react";
-import { CreatePost } from "@/components/create-post";
-import { useAuth } from "@/components/auth/auth-provider";
-import { useSettings } from "@/hooks/use-settings";
-import { PostCategories, Post } from "@/lib/types";
+import { CreatePost } from "@/app/feed/create-post/page";
+import { Post } from "../../lib/types";
 import Stories from "./stories/page";
 
 const categoryFilters: string[] = ["all", "general", "news", "entertainment", "sports", "technology", "politics"];
@@ -24,12 +18,9 @@ interface MainContentProps {
 }
 
 function MainContent({ category, showStories = false }: MainContentProps) {
-  const { user } = useAuth();
-  const { settings } = useSettings();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
-  const { isMobile } = useResponsive();
   const [sortBy, setSortBy] = useState<string>("latest");
   const [filterBy, setFilterBy] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
@@ -41,7 +32,7 @@ function MainContent({ category, showStories = false }: MainContentProps) {
         if (!response.ok) throw new Error("Failed to fetch posts");
         const data: Post[] = await response.json();
         setPosts(data);
-      } catch (error) {
+      } catch {
         toast({ variant: "destructive", title: "Error", description: "Could not load posts." });
       } finally {
         setLoading(false);

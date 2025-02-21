@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react"
 import { 
   Home, 
   MessageSquare, 
@@ -21,7 +22,7 @@ export type NavLocation = 'sidebar' | 'mobile-bottom' | 'mobile-drawer' | 'mobil
 export interface NavItem {
   href: string
   label: string
-  icon: any // Using any for now since we're using Lucide icons
+  icon: LucideIcon
   locations: NavLocation[]
 }
 
