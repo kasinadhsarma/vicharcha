@@ -3,7 +3,7 @@ import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { createStory } from '@/lib/db';
+import { createStory } from '@/lib/db/db';
 
 export async function POST(req: NextRequest) {
   try {

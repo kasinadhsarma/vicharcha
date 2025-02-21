@@ -4,10 +4,21 @@ interface User {
   imageUrl?: string;
 }
 
+interface StoryItem {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  duration: number;
+}
+
 interface Story {
   id: string;
   userId: string;
-  content: string;
+  items: StoryItem[];
+  category: string;
+  downloadable: boolean;
+  isAdult: boolean;
+  expiresAt: Date;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -17,14 +28,32 @@ const stories: Story[] = [
   {
     id: '1',
     userId: 'demo_user_john_doe',
-    content: 'https://example.com/story1.jpg',
+    items: [{
+      id: '1-1',
+      url: 'https://example.com/story1.jpg',
+      type: 'image',
+      duration: 5
+    }],
+    category: 'general',
+    downloadable: true,
+    isAdult: false,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     createdAt: new Date(),
     updatedAt: new Date()
   },
   {
-    id: '2', 
+    id: '2',
     userId: 'demo_user_jane_smith',
-    content: 'https://example.com/story2.jpg',
+    items: [{
+      id: '2-1',
+      url: 'https://example.com/story2.jpg',
+      type: 'image',
+      duration: 5
+    }],
+    category: 'general',
+    downloadable: true,
+    isAdult: false,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     createdAt: new Date(),
     updatedAt: new Date()
   }
@@ -54,4 +83,16 @@ export async function findUserByPhone(phone: string): Promise<User | undefined> 
   return users.find(user => user.phone === phone);
 }
 
-export type { Story };
+export async function createStory(data: Omit<Story, 'id' | 'createdAt' | 'updatedAt'>): Promise<Story> {
+  const story: Story = {
+    id: Math.random().toString(36).substring(7),
+    ...data,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  stories.push(story);
+  return story;
+}
+
+export type { Story, StoryItem };
