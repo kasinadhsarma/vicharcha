@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/components/auth/auth-provider"
@@ -219,271 +219,281 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
   return (
     <div className="relative">
       <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-violet-500/10 rounded-xl blur-xl" />
-      <Card className="relative border bg-card/50 backdrop-blur-sm p-4">
-        <div className="flex gap-4">
-          <Avatar className="w-10 h-10 border-2 border-background">
-            <AvatarImage src={`/placeholder.svg?text=${user?.name?.[0] || "U"}`} alt={user?.name} />
-            <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 space-y-4">
-            <div className="relative">
-              <Textarea
-                ref={textareaRef}
-                placeholder="What's on your mind?"
-                value={content}
-                onChange={handleContentChange}
-                onClick={handleExpandClick}
-                className={cn(
-                  "min-h-[60px] bg-background/50 resize-none border-none focus-visible:ring-1",
-                  isOverLimit && "border-red-500 focus-visible:ring-red-500"
-                )}
-                disabled={isLoading}
-              />
-              <span className={cn(
-                "absolute bottom-2 right-2 text-xs",
-                isOverLimit ? "text-red-500" : "text-muted-foreground"
-              )}>
-                {remainingTokens} tokens remaining
-              </span>
+      <Card className="relative border bg-card/50 backdrop-blur-sm">
+        <CardHeader className="flex items-center justify-between">
+          <div className="flex gap-4">
+            <Avatar className="w-10 h-10 border-2 border-background">
+              <AvatarImage src={`/placeholder.svg?text=${user?.name?.[0] || "U"}`} alt={user?.name} />
+              <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold">Create Post</h3>
             </div>
-            
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="space-y-4 mb-4">
-                    <Select 
-                      value={category} 
-                      onValueChange={(value: string) => setCategory(value)} 
-                      disabled={isLoading}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={PostCategories.GENERAL}>General</SelectItem>
-                        <SelectItem value={PostCategories.NEWS}>News</SelectItem>
-                        <SelectItem value={PostCategories.ENTERTAINMENT}>Entertainment</SelectItem>
-                        <SelectItem value={PostCategories.SPORTS}>Sports</SelectItem>
-                        <SelectItem value={PostCategories.TECHNOLOGY}>Technology</SelectItem>
-                        <SelectItem value={PostCategories.POLITICS}>Politics</SelectItem>
-                        {settings?.privacy?.adultContent && (
-                          <SelectItem value={PostCategories.ADULT}>Adult Content (18+)</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-4">
+              <div className="relative">
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="What's on your mind?"
+                  value={content}
+                  onChange={handleContentChange}
+                  onClick={handleExpandClick}
+                  className={cn(
+                    "min-h-[60px] bg-background/50 resize-none border-none focus-visible:ring-1",
+                    isOverLimit && "border-red-500 focus-visible:ring-red-500"
+                  )}
+                  disabled={isLoading}
+                />
+                <span className={cn(
+                  "absolute bottom-2 right-2 text-xs",
+                  isOverLimit ? "text-red-500" : "text-muted-foreground"
+                )}>
+                  {remainingTokens} tokens remaining
+                </span>
+              </div>
+              
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="space-y-4 mb-4">
+                      <Select 
+                        value={category} 
+                        onValueChange={(value: string) => setCategory(value)} 
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={PostCategories.GENERAL}>General</SelectItem>
+                          <SelectItem value={PostCategories.NEWS}>News</SelectItem>
+                          <SelectItem value={PostCategories.ENTERTAINMENT}>Entertainment</SelectItem>
+                          <SelectItem value={PostCategories.SPORTS}>Sports</SelectItem>
+                          <SelectItem value={PostCategories.TECHNOLOGY}>Technology</SelectItem>
+                          <SelectItem value={PostCategories.POLITICS}>Politics</SelectItem>
+                          {settings?.privacy?.adultContent && (
+                            <SelectItem value={PostCategories.ADULT}>Adult Content (18+)</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
 
-                    {/* Tags Section */}
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag) => (
-                        <Badge 
-                          key={tag.id}
-                          variant="secondary"
-                          className="flex items-center gap-1"
-                        >
-                          <Hash className="h-3 w-3" />
-                          {tag.name}
-                          <button
-                            onClick={() => handleRemoveTag(tag.id)}
-                            className="ml-1 hover:text-destructive"
-                            disabled={isLoading}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-
-                    {/* Song Selection */}
-                    {selectedSong && (
-                      <div className="flex items-center gap-2 p-2 bg-background/50 rounded-lg">
-                        <Music className="h-4 w-4" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{selectedSong.title}</p>
-                          <p className="text-xs text-muted-foreground">{selectedSong.artist}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setSelectedSong(null)}
-                          disabled={isLoading}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Media Preview */}
-                    {mediaUrls.length > 0 && (
+                      {/* Tags Section */}
                       <div className="flex flex-wrap gap-2">
-                        {mediaUrls.map((url, index) => (
-                          <div key={index} className="relative group">
-                            <Image
-                              src={url}
-                              alt="Media preview"
-                              width={80}
-                              height={80}
-                              className="object-cover rounded-lg"
-                            />
+                        {tags.map((tag) => (
+                          <Badge 
+                            key={tag.id}
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            <Hash className="h-3 w-3" />
+                            {tag.name}
                             <button
-                              onClick={() => setMediaUrls(mediaUrls.filter((_, i) => i !== index))}
-                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleRemoveTag(tag.id)}
+                              className="ml-1 hover:text-destructive"
                               disabled={isLoading}
                             >
                               <X className="h-3 w-3" />
                             </button>
-                          </div>
+                          </Badge>
                         ))}
                       </div>
-                    )}
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-2">
-                      {/* Media Upload */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-9 w-9 rounded-full"
-                            disabled={isLoading || mediaUrls.length >= 5}
-                          >
-                            <ImageIcon className="h-5 w-5" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Upload Media (Max 5 files)</DialogTitle>
-                          </DialogHeader>
-                          <FileUpload 
-                            onFileSelect={handleFileSelect}
-                            maxSize={100}
-                            accept={{
-              'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-              'video/*': ['.mp4', '.webm']
-            }}
-                          />
-                        </DialogContent>
-                      </Dialog>
-
-                      {/* Tag Selector */}
-                      <Popover>
-                        <PopoverTrigger asChild>
+                      {/* Song Selection */}
+                      {selectedSong && (
+                        <div className="flex items-center gap-2 p-2 bg-background/50 rounded-lg">
+                          <Music className="h-4 w-4" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{selectedSong.title}</p>
+                            <p className="text-xs text-muted-foreground">{selectedSong.artist}</p>
+                          </div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 rounded-full"
+                            className="h-6 w-6"
+                            onClick={() => setSelectedSong(null)}
                             disabled={isLoading}
                           >
-                            <Hash className="h-5 w-5" />
+                            <X className="h-4 w-4" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-0">
-                          <Command>
-                            <CommandInput placeholder="Search tags..." />
-                            <CommandEmpty>No tags found.</CommandEmpty>
-                            <CommandGroup>
-                              {suggestedTags.map((tag) => (
-                                <CommandItem
-                                  key={tag.id}
-                                  onSelect={() => handleAddTag(tag)}
-                                >
-                                  <Hash className="h-4 w-4 mr-2" />
-                                  {tag.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                        </div>
+                      )}
 
-                      {/* Song Selector */}
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9rounded-full"
-                            disabled={isLoading}
-                          >
-                            <Music className="h-5 w-5" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-0">
-                          <Command>
-                            <CommandInput 
-                              placeholder="Search songs..." 
-                              value={searchTerm}
-                              onValueChange={setSearchTerm}
-                            />
-                            <CommandEmpty>No songs found.</CommandEmpty>
-                            <CommandGroup>
-                              {suggestedSongs
-                                .filter(song => 
-                                  song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                  song.artist.toLowerCase().includes(searchTerm.toLowerCase())
-                                )
-                                .map((song) => (
-                                  <CommandItem
-                                    key={song.id}
-                                    onSelect={() => handleSelectSong(song)}
-                                    className="flex items-center gap-2"
-                                  >
-                                    {song.albumArt && (
-                                      <Image 
-                                        src={song.albumArt || ""} 
-                                        alt={`Album art for ${song.title}`}
-                                        width={32}
-                                        height={32}
-                                        className="rounded object-cover"
-                                      />
-                                    )}
-                                    <div className="flex flex-col">
-                                      <span className="text-sm font-medium">{song.title}</span>
-                                      <span className="text-xs text-muted-foreground">{song.artist}</span>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      {/* Media Preview */}
+                      {mediaUrls.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {mediaUrls.map((url, index) => (
+                            <div key={index} className="relative group">
+                              <Image
+                                src={url}
+                                alt="Media preview"
+                                width={80}
+                                height={80}
+                                className="object-cover rounded-lg"
+                              />
+                              <button
+                                onClick={() => setMediaUrls(mediaUrls.filter((_, i) => i !== index))}
+                                className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                disabled={isLoading}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setIsExpanded(false)}
-                        disabled={isLoading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleSubmit} 
-                        className="gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 text-white hover:opacity-90"
-                        disabled={!content.trim() || isOverLimit || isLoading}
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Sparkles className="h-4 w-4" />
-                        )}
-                        {isLoading ? "Posting..." : "Post"}
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        </CardContent>
+        <CardFooter className="px-4 pb-4">
+          <div className="flex items-center justify-between w-full">
+            <div className="flex gap-2">
+              {/* Media Upload */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 rounded-full"
+                    disabled={isLoading || mediaUrls.length >= 5}
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Upload Media (Max 5 files)</DialogTitle>
+                  </DialogHeader>
+                  <FileUpload 
+                    onFileSelect={handleFileSelect}
+                    maxSize={100}
+                    accept={{
+                      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
+                      'video/*': ['.mp4', '.webm']
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              {/* Tag Selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full"
+                    disabled={isLoading}
+                  >
+                    <Hash className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0">
+                  <Command>
+                    <CommandInput placeholder="Search tags..." />
+                    <CommandEmpty>No tags found.</CommandEmpty>
+                    <CommandGroup>
+                      {suggestedTags.map((tag) => (
+                        <CommandItem
+                          key={tag.id}
+                          onSelect={() => handleAddTag(tag)}
+                        >
+                          <Hash className="h-4 w-4 mr-2" />
+                          {tag.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {/* Song Selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9rounded-full"
+                    disabled={isLoading}
+                  >
+                    <Music className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search songs..." 
+                      value={searchTerm}
+                      onValueChange={setSearchTerm}
+                    />
+                    <CommandEmpty>No songs found.</CommandEmpty>
+                    <CommandGroup>
+                      {suggestedSongs
+                        .filter(song => 
+                          song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          song.artist.toLowerCase().includes(searchTerm.toLowerCase())
+                        )
+                        .map((song) => (
+                          <CommandItem
+                            key={song.id}
+                            onSelect={() => handleSelectSong(song)}
+                            className="flex items-center gap-2"
+                          >
+                            {song.albumArt && (
+                              <Image 
+                                src={song.albumArt || ""} 
+                                alt={`Album art for ${song.title}`}
+                                width={32}
+                                height={32}
+                                className="rounded object-cover"
+                              />
+                            )}
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{song.title}</span>
+                              <span className="text-xs text-muted-foreground">{song.artist}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsExpanded(false)}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                className="gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 text-white hover:opacity-90"
+                disabled={!content.trim() || isOverLimit || isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                {isLoading ? "Posting..." : "Post"}
+              </Button>
+            </div>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   )
