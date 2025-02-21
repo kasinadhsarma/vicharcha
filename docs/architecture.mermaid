@@ -1,0 +1,74 @@
+flowchart TD
+    %% Main Layers
+    UI[User Interface Layer]
+    AUTH[Authentication Layer]
+    SVC[Service Layer]
+    DATA[Data Layer]
+    DB[(Cassandra DB)]
+
+    subgraph Frontend["Frontend Components"]
+        NAV[Navigation]
+        THEME[Theme Switcher]
+        LOGOUT[Logout Button]
+        DESK[Desktop Sidebar]
+        MOB[Mobile Nav Bar]
+        
+        NAV --> DESK
+        NAV --> MOB
+    end
+
+    subgraph Modules["UI Modules"]
+        subgraph Auth["Authentication"]
+            OTP[Login with OTP]
+        end
+        
+        subgraph Social["Social Features"]
+            FEED[Home Feed]
+            MSG[Messages]
+            REELS[Reels]
+            AI[AI Assistant]
+        end
+        
+        subgraph UserFeatures["User Features"]
+            PROFILE[Profile Management]
+            SETTINGS[Account Settings]
+            RESEARCH[Research Section]
+            EMERGENCY[Emergency Services]
+        end
+        
+        subgraph CommerceFeatures["Commerce Features"]
+            SHOP[Shopping Interface]
+            PAYMENT[Payment Processing]
+        end
+    end
+
+    subgraph Database["Database Structure"]
+        USER_AUTH[User Authentication]
+        SESSION[Session Management]
+        PROFILE_DATA[Profile Data Storage]
+        
+        DB --> USER_AUTH
+        DB --> SESSION
+        DB --> PROFILE_DATA
+    end
+
+    subgraph Security["Security Features"]
+        SEC_AUTH[OTP Authentication]
+        SEC_PAY[Secure Payment]
+        SEC_SESSION[Session Management]
+        SEC_ENC[Data Encryption]
+    end
+
+    %% Main Flow
+    UI --> AUTH
+    AUTH --> SVC
+    SVC --> DATA
+    DATA --> DB
+
+    %% Component Connections
+    UI --> Frontend
+    UI --> Modules
+    AUTH --> SEC_AUTH
+    SVC --> SEC_SESSION
+    DATA --> SEC_ENC
+    CommerceFeatures --> SEC_PAY

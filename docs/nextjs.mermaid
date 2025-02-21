@@ -1,0 +1,54 @@
+flowchart TD
+    ROOT["/"] --> APP["app/"]
+    ROOT --> PUBLIC["public/"]
+    ROOT --> COMP["components/"]
+    
+    %% App Directory Structure
+    APP --> LOGIN["login/"]
+    APP --> FEED["feed/"]
+    APP --> PROFILE["profile/"]
+    APP --> REELS["reels/"]
+    APP --> SHOP["shop/"]
+    APP --> MESSAGES["messages/"]
+    
+    %% Login Section
+    LOGIN --> LOGIN_PAGE["page.tsx"]
+    LOGIN --> LOGIN_LAYOUT["layout.tsx"]
+    LOGIN --> LOGIN_LOADING["loading.tsx"]
+    LOGIN --> LOGIN_ERROR["error.tsx"]
+    
+    %% Feed Section
+    FEED --> FEED_PAGE["page.tsx"]
+    FEED --> FEED_LAYOUT["layout.tsx"]
+    
+    %% Profile Section
+    PROFILE --> PROFILE_PAGE["page.tsx"]
+    PROFILE --> PROFILE_LAYOUT["layout.tsx"]
+    
+    %% Components Directory
+    COMP --> UI["ui/"]
+    COMP --> SHARED["shared/"]
+    COMP --> AUTH["auth/"]
+    
+    %% UI Components
+    UI --> BUTTONS["buttons/"]
+    UI --> CARDS["cards/"]
+    UI --> FORMS["forms/"]
+    
+    %% Shared Components
+    SHARED --> HEADER["Header.tsx"]
+    SHARED --> FOOTER["Footer.tsx"]
+    SHARED --> SIDEBAR["Sidebar.tsx"]
+    
+    %% Auth Components
+    AUTH --> OTP["OtpInput.tsx"]
+    AUTH --> LOGIN_FORM["LoginForm.tsx"]
+    
+    %% Style Definitions
+    classDef default fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef directory fill:#e3f2fd,stroke:#1565c0
+    classDef file fill:#fff,stroke:#666
+    
+    class ROOT,APP,PUBLIC,COMP,LOGIN,FEED,PROFILE,UI,SHARED,AUTH directory
+    class LOGIN_PAGE,LOGIN_LAYOUT,LOGIN_LOADING,LOGIN_ERROR,FEED_PAGE,FEED_LAYOUT,PROFILE_PAGE,PROFILE_LAYOUT file
+    class HEADER,FOOTER,SIDEBAR,OTP,LOGIN_FORM file
