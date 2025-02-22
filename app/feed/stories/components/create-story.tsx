@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
+import { StoryEditor } from "./story-editor";
+import Image from "next/image";
 
 interface CreateStoryProps {
   onStoryCreated: () => void;
@@ -23,6 +25,7 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,6 +34,14 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
     setSelectedFile(file);
     const url = URL.createObjectURL(file);
     setPreview(url);
+    setIsEditing(true); // Start editing when file is selected
+  };
+
+  const handleEditedFile = (editedFile: File) => {
+    setSelectedFile(editedFile);
+    const url = URL.createObjectURL(editedFile);
+    setPreview(url);
+    setIsEditing(false);
   };
 
   const handleUpload = async () => {
@@ -96,67 +107,84 @@ export function CreateStory({ onStoryCreated }: CreateStoryProps) {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[425px] bg-background border">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Create New Story</DialogTitle>
+            <DialogTitle className="text-foreground">
+              {isEditing ? "Edit Story" : "Create New Story"}
+            </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col items-center gap-4">
-              {preview ? (
-                <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black">
-                  {selectedFile?.type.startsWith('video/') ? (
-                    <video
-                      src={preview}
-                      className="w-full h-full object-contain"
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="w-full h-full object-contain"
-                    />
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full h-[200px] border-dashed border-muted-foreground/20"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-6 w-6 mr-2" />
-                  Select Media
-                </Button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-            </div>
+          
+          {isEditing && selectedFile && preview ? (
+            <StoryEditor
+              file={selectedFile}
+              preview={preview}
+              onSave={handleEditedFile}
+              onCancel={() => setIsEditing(false)}
+              setSelectedFile={setSelectedFile}
+              setPreview={setPreview}
+            />
+          ) : (
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col items-center gap-4">
+                {preview ? (
+                  <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-black">
+                    {selectedFile?.type.startsWith('video/') ? (
+                      <video
+                        src={preview}
+                        className="w-full h-full object-contain"
+                        controls
+                      />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={preview}
+                          alt="Story preview"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full h-[200px] border-dashed border-muted-foreground/20"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="h-6 w-6 mr-2" />
+                    Select Media
+                  </Button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="allow-download" className="text-sm">
-                Allow Download
-              </Label>
-              <Switch
-                id="allow-download"
-                checked={allowDownload}
-                onCheckedChange={setAllowDownload}
-              />
-            </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="allow-download" className="text-sm">
+                  Allow Download
+                </Label>
+                <Switch
+                  id="allow-download"
+                  checked={allowDownload}
+                  onCheckedChange={setAllowDownload}
+                />
+              </div>
 
-            <Button
-              onClick={handleUpload}
-              disabled={!selectedFile || isUploading}
-              className={cn(
-                "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:opacity-90",
-                isUploading && "animate-pulse"
-              )}
-            >
-              {isUploading ? "Uploading..." : "Share Story"}
-            </Button>
-          </div>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading}
+                className={cn(
+                  "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:opacity-90",
+                  isUploading && "animate-pulse"
+                )}
+              >
+                {isUploading ? "Uploading..." : "Share Story"}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

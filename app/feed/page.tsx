@@ -7,9 +7,9 @@ import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Clock, TrendingUp, Star, Users, Filter, MessageSquare, Share } from "lucide-react";
-import { CreatePost } from "@/app/feed/create-post/page";
+import { CreatePost } from "./create-post/page";
 import { Post } from "../../lib/types";
-import Stories from "./stories/page";
+import StoriesPage from "./stories/page";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 
@@ -100,7 +100,7 @@ function MainContent({ category, showStories = false }: MainContentProps) {
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-        {showStories && <Stories />}
+        {showStories && <StoriesPage />}
         <CreatePost onPostCreated={async () => setLoading(true)} initialCategory={category} />
 
         <div className="flex flex-wrap items-center justify-between gap-4 p-4">

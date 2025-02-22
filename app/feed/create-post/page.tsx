@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef } from "react"
+import Image from "next/image"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -10,9 +11,8 @@ import { useAuth } from "@/components/auth/auth-provider"
 import { FileUpload } from "@/components/file-upload"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
-import { Image, X, Sparkles, Loader2, Music, Hash } from "lucide-react"
+import { Image as ImageIcon, X, Sparkles, Loader2, Music, Hash } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -21,6 +21,12 @@ import { cn } from "@/lib/utils"
 import { useSettings } from "@/hooks/use-settings"
 
 const TOKEN_LIMIT = 500;
+
+interface User {
+  id: string;
+  name?: string;
+  image?: string;
+}
 
 interface CreatePostProps {
   onPostCreated: (post: Post) => Promise<void>;
@@ -40,7 +46,7 @@ interface Song {
 }
 
 export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) {
-  const { user } = useAuth()
+  const { user } = useAuth() as { user: User | null }
   const { settings } = useSettings()
   const { toast } = useToast()
   const [content, setContent] = useState("")
@@ -126,7 +132,7 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
       return;
     }
     // In a real app, implement file upload to storage and get URL
-    const url = `/placeholder-${Date.now()}.jpg`
+    const url = `/placeholder-${file.name}-${Date.now()}.jpg`
     setMediaUrls([...mediaUrls, url])
   }
 
@@ -220,7 +226,10 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
       <Card className="relative border bg-card/50 backdrop-blur-sm p-4">
         <div className="flex gap-4">
           <Avatar className="w-10 h-10 border-2 border-background">
-            <AvatarImage src={`/placeholder.svg?text=${user?.name?.[0] || "U"}`} alt={user?.name} />
+            <AvatarImage 
+              src={user?.image || `/placeholder.svg?text=${user?.name?.[0] || "U"}`} 
+              alt={user?.name || "User"} 
+            />
             <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-4">
@@ -320,10 +329,12 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                       <div className="flex flex-wrap gap-2">
                         {mediaUrls.map((url, index) => (
                           <div key={index} className="relative group">
-                            <img
+                            <Image
                               src={url}
-                              alt=""
-                              className="w-20 h-20 object-cover rounded-lg"
+                              alt={`Media ${index + 1}`}
+                              width={80}
+                              height={80}
+                              className="object-cover rounded-lg"
                             />
                             <button
                               onClick={() => setMediaUrls(mediaUrls.filter((_, i) => i !== index))}
@@ -349,7 +360,7 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                             className="h-9 w-9 rounded-full"
                             disabled={isLoading || mediaUrls.length >= 5}
                           >
-                            <Image className="h-5 w-5" />
+                            <ImageIcon className="h-5 w-5" />
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -431,11 +442,13 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                                     className="flex items-center gap-2"
                                   >
                                     {song.albumArt && (
-                                      <img 
-                                        src={song.albumArt} 
-                                        alt={song.title}
-                                        className="w-8 h-8 rounded object-cover"
-                                      />
+              <Image 
+                src={song.albumArt} 
+                alt={song.title}
+                width={32}
+                height={32}
+                className="rounded object-cover"
+              />
                                     )}
                                     <div className="flex flex-col">
                                       <span className="text-sm font-medium">{song.title}</span>
@@ -458,12 +471,12 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
                       >
                         Cancel
                       </Button>
-                        <Button 
-                          variant="default"
-                          onClick={handleSubmit} 
-                          className="gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 text-white hover:opacity-90"
-                          disabled={!content.trim() || isOverLimit || isLoading}
-                        >
+                      <Button 
+                        variant="default"
+                        onClick={handleSubmit} 
+                        className="gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-violet-500 text-white hover:opacity-90"
+                        disabled={!content.trim() || isOverLimit || isLoading}
+                      >
                         {isLoading ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
@@ -481,4 +494,16 @@ export function CreatePost({ onPostCreated, initialCategory }: CreatePostProps) 
       </Card>
     </div>
   )
+}
+
+export default function CreatePostPage() {
+  const handlePostCreated = async (post: Post) => {
+    console.log('Post created:', post);
+  };
+
+  return (
+    <div className="container max-w-3xl mx-auto py-6">
+      <CreatePost onPostCreated={handlePostCreated} />
+    </div>
+  );
 }

@@ -32,6 +32,7 @@ export interface UserSettings {
     adultContent: boolean;
     publicProfile: boolean;
   };
+  isAdultContentEnabled?: boolean;
   navigation: NavigationPreferences;
 }
 
@@ -86,6 +87,13 @@ export interface Story {
   isViewed: boolean;
   mediaUrl: string;
   downloadable: boolean;
+  userStatus?: 'online' | 'offline';
+  profileUrl?: string;
+  reactions?: {
+    count: number;
+    type: string;
+  }[];
+  duration?: number; // Duration of the story in seconds
 }
 
 export interface Comment {
@@ -178,6 +186,11 @@ export interface IndividualChat {
 }
 
 export type ChatWithDetails = IndividualChat;
+
+// Type guard to check if a chat is a group chat
+export function isGroupChat(chat: ChatWithDetails | IndividualChat): boolean {
+  return chat.isGroup;
+}
 
 // Re-export DigiLocker types
 export type { DigiLockerDocument, DigiLockerAuth } from './digilocker-service';

@@ -1,5 +1,7 @@
 import { Client, types, QueryOptions } from 'cassandra-driver';
-import { DatabaseResult } from './types';
+import { DatabaseResult, PostCategories } from './types';
+
+export { PostCategories };
 
 // Initialize Cassandra client
 const client = new Client({
@@ -41,6 +43,28 @@ export async function executeQuery<T = types.Row>(
     };
   } catch (error) {
     console.error('Error executing query:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function executeBatch(
+  queries: { query: string; params?: unknown[] }[],
+  options: QueryOptions = { prepare: true }
+): Promise<DatabaseResult> {
+  try {
+    await client.batch(
+      queries.map(q => ({ query: q.query, params: q.params || [] })),
+      options
+    );
+    return {
+      success: true,
+      count: queries.length
+    };
+  } catch (error) {
+    console.error('Error executing batch:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs'
+import { Post, Story } from '@/lib/types'
 
 interface MLResponse {
   post_analysis: {
@@ -30,11 +31,11 @@ interface AnalyzeRequest {
   userId: string
   age: number
   isAgeVerified: boolean
-  posts: any[]
-  stories: any[]
+  posts: Post[]
+  stories: Story[]
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const data: AnalyzeRequest = await req.json()
     
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     // Run Python analysis script
     const pythonScript = path.join(process.cwd(), 'ml', 'homepage_analysis.py')
     
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
     const pythonProcess = spawn('python3', [
       pythonScript,
       '--data', tempDataPath,

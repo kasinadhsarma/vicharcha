@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Download, Pause, Play, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,14 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
     }
   }, [currentIndex]);
 
+  const handleNext = useCallback(() => {
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else {
+      onClose();
+    }
+  }, [currentIndex, stories.length, onClose]);
+
   useEffect(() => {
     if (!currentStory) return;
 
@@ -62,7 +71,7 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [currentStory, isPlaying]);
+  }, [currentStory, isPlaying, handleNext]);
 
   const handleVideoTimeUpdate = () => {
     if (videoRef.current) {
@@ -88,14 +97,6 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      onClose();
     }
   };
 
@@ -156,12 +157,15 @@ export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewer
                 onClick={togglePlayPause}
               />
             ) : (
-              <img
-                src={currentStory.mediaUrl}
-                alt=""
-                className="w-full h-full object-contain"
-                onClick={togglePlayPause}
-              />
+              <div className="relative w-full h-full">
+                <Image
+                  src={currentStory.mediaUrl}
+                  alt={currentStory.username || "Story"}
+                  fill
+                  className="object-contain"
+                  onClick={togglePlayPause}
+                />
+              </div>
             )}
 
             {/* Overlay controls */}
