@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image"; // Import Next.js Image component
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -71,9 +73,11 @@ export default function ResearchPage() {
           <h1 className="text-3xl font-bold">Research Articles</h1>
           <p className="text-muted-foreground">Explore the latest research in various fields</p>
         </div>
-        <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-          Submit Research
-        </Button>
+        <Link href="/research/submit">
+          <Button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+            Submit Research
+          </Button>
+        </Link>
       </div>
 
       {/* Search and filters */}
@@ -111,10 +115,12 @@ export default function ResearchPage() {
           <Card key={article.id} className="overflow-hidden hover:shadow-lg transition-shadow">
             {article.imageUrl && (
               <div className="relative h-48">
-                <img
+                {/* Use Next.js Image component instead of <img> */}
+                <Image
                   src={article.imageUrl}
                   alt={article.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
             )}

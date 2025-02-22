@@ -1,79 +1,83 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import { v4 as uuidv4 } from 'uuid';
-import { createStory } from '@/lib/db/db';
+import { NextRequest, NextResponse } from "next/server";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import { auth } from "@/lib/auth";
+
+// Define upload directory - In production, use proper cloud storage
+const UPLOAD_DIR = path.join(process.cwd(), "uploads", "stories");
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const downloadable = formData.get('downloadable') === 'true';
-    
+    const file = formData.get("file") as File;
+    const settings = JSON.parse(formData.get("settings") as string);
+    const storyId = formData.get("storyId") as string;
+    const chunkIndex = parseInt(formData.get("chunkIndex") as string);
+    const totalChunks = parseInt(formData.get("totalChunks") as string);
+
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 });
     }
 
-    // Read file data
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Determine file type and directory
-    const isVideo = file.type.startsWith('video/');
-    const directory = isVideo ? 'videos' : 'images';
-    const targetDirectory = join(process.cwd(), 'public', directory);
-
-    // Create directory if it doesn't exist
-    if (!existsSync(targetDirectory)) {
-      mkdirSync(targetDirectory, { recursive: true });
-    }
+    // Ensure upload directory exists
+    await mkdir(UPLOAD_DIR, { recursive: true });
 
     // Generate unique filename
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const extension = file.name.split('.').pop();
-    const filename = `story-${uniqueSuffix}.${extension}`;
-    const filepath = join(targetDirectory, filename);
+    const timestamp = Date.now();
+    const fileExt = path.extname(file.name);
+    const fileName = `${storyId}_${timestamp}${fileExt}`;
+    const filePath = path.join(UPLOAD_DIR, fileName);
 
-    // Write file
-    await writeFile(filepath, buffer);
-
-    // Create story record
-    const publicUrl = `/${directory}/${filename}`;
+    // Convert file to buffer and save
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
     
-    // Create story in database
-    const story = await createStory({
-      userId: 'test_user', // This should come from authenticated user
-      items: [{
-        id: uuidv4(),
-        url: publicUrl,
-        type: isVideo ? 'video' : 'image',
-        duration: isVideo ? 15 : 5
-      }],
-      category: 'general',
-      downloadable,
-      isAdult: false,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+    // For chunk handling
+    const chunkPath = path.join(UPLOAD_DIR, `${fileName}.part${chunkIndex}`);
+    await writeFile(chunkPath, buffer);
+
+    // If this is the last chunk, combine all chunks
+    if (chunkIndex === totalChunks - 1) {
+      const chunks = [];
+      for (let i = 0; i < totalChunks; i++) {
+        const chunkPath = path.join(UPLOAD_DIR, `${fileName}.part${i}`);
+        const chunkData = await import("fs/promises").then(fs => fs.readFile(chunkPath));
+        chunks.push(chunkData);
+        // Clean up chunk file
+        await import("fs/promises").then(fs => fs.unlink(chunkPath));
+      }
+
+      // Combine chunks and save final file
+      const finalBuffer = Buffer.concat(chunks);
+      await writeFile(filePath, finalBuffer);
+
+      // Update story record in database
+      // TODO: Implement database update
+      
+      return NextResponse.json({
+        success: true,
+        url: `/uploads/stories/${fileName}`,
+        settings
+      });
+    }
+
+    // For intermediate chunks
+    return NextResponse.json({
+      success: true,
+      chunkIndex,
+      remaining: totalChunks - chunkIndex - 1
     });
 
-    return NextResponse.json({ 
-      success: true,
-      url: publicUrl,
-      type: isVideo ? 'video' : 'image',
-      storyId: story.id
-    });
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error("Upload error:", error);
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { success: false, error: "Upload failed" },
       { status: 500 }
     );
   }
 }
-
-// Configure route segment for file uploads
-export const dynamic = 'force-dynamic';
-export const maxDuration = 60;

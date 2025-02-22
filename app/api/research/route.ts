@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockDB } from '@/lib/mock-db';
 import { types } from 'cassandra-driver';
 
 interface ResearchArticle {

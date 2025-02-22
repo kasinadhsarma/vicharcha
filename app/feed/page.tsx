@@ -196,7 +196,7 @@ function MainContent({ category, showStories = false }: MainContentProps) {
                     <div className="whitespace-pre-wrap">{post.content}</div>
                     {post.mediaUrls?.length > 0 && (
                       <div className="grid gap-2 mt-2">
-                        {post.mediaUrls.map((url, index) => (
+                        {post.mediaUrls.map((url: string, index: number) => (
                           <Image 
                             key={index}
                             src={url} 

@@ -36,6 +36,7 @@ export interface UserSettings {
   navigation: NavigationPreferences;
 }
 
+// Base post interface used throughout the app
 export interface Post {
   id: string;
   userId: string;
@@ -59,6 +60,16 @@ export interface Post {
   isVerified: boolean;
   isPremium: boolean;
   ageRestricted: boolean;
+}
+
+// Extended post interface with additional feed-specific properties
+export interface FeedPost extends Post {
+  isPinned?: boolean;
+  isFeatured?: boolean;
+  engagement?: {
+    totalReactions: number;
+    reactionTypes: string[];
+  };
 }
 
 export interface Attachment {
