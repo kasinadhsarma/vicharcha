@@ -7,6 +7,7 @@ interface FileUploadProps {
   accept?: Record<string, string[]>;
   maxSize?: number;
   className?: string;
+  disabled?: boolean;
   allowedTypes?: {
     image?: boolean;
     video?: boolean;
@@ -19,6 +20,7 @@ export function FileUpload({
   accept,
   maxSize = 5 * 1024 * 1024, // 5MB default
   className,
+  disabled = false,
 }: FileUploadProps) {
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,8 @@ export function FileUpload({
     onDrop,
     accept,
     maxSize,
-    multiple: false
+    multiple: false,
+    disabled
   });
 
   return (
@@ -46,8 +49,9 @@ export function FileUpload({
       <div
         {...getRootProps()}
         className={cn(
-          'border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
+          'border-2 border-dashed rounded-lg p-6 text-center transition-colors',
           isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent/50',
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
           'flex flex-col items-center justify-center gap-2'
         )}
       >
