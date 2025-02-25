@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -281,6 +281,7 @@ export default function SocialPage() {
   const [connections, setConnections] = useState<Connection[]>([])
 
   useEffect(() => {
+    // Simulated data
     setJobs([
       {
         id: "1",
@@ -388,26 +389,25 @@ export default function SocialPage() {
                 </AnimatePresence>
               </ScrollArea>
             </TabsContent>
-
             <TabsContent value="network" className="mt-0">
-              <NetworkStats />
-              <NetworkSearch />
-              <ScrollArea className="h-[calc(100vh-24rem)] min-h-[400px]">
-                <AnimatePresence>
-                  {connections.map((connection, index) => (
-                    <motion.div
-                      key={connection.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <NetworkProfile connection={connection} />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </ScrollArea>
-            </TabsContent>
+            <NetworkStats />
+            <NetworkSearch />
+            <ScrollArea className="h-[calc(100vh-24rem)] min-h-[400px]">
+              <AnimatePresence>
+                {connections.map((connection, index) => (
+                  <motion.div
+                    key={connection.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <NetworkProfile connection={connection} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </ScrollArea>
+          </TabsContent>
           </Tabs>
         </div>
       </div>
