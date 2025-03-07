@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
-import { executeQuery, executeBatch, PostCategory, PostCategories } from '@/lib/cassandra';
+import { executeQuery, executeBatch, PostCategories } from '@/lib/cassandra';
 import { verify } from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 
@@ -24,6 +24,7 @@ const ActivityTypes = {
 
 type ConnectionType = typeof ConnectionTypes[keyof typeof ConnectionTypes];
 type ActivityType = typeof ActivityTypes[keyof typeof ActivityTypes];
+type PostCategory = typeof PostCategories[keyof typeof PostCategories];
 
 // Middleware to verify auth token
 async function verifyAuth(req: NextRequest) {
@@ -175,7 +176,13 @@ async function handleCreatePost(userId: string, data: {
     }
   ];
 
-  await executeBatch(queries);
+  const result = await executeBatch(queries);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to create post' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     postId,
@@ -264,7 +271,13 @@ async function handleCreateReel(userId: string, data: {
     }
   ];
 
-  await executeBatch(queries);
+  const result = await executeBatch(queries);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to create reel' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     reelId,
@@ -286,18 +299,23 @@ async function handleUpdateConnection(userId: string, data: {
     );
   }
 
-  if (remove) {
-    await executeQuery(
-      'DELETE FROM social_network.connections WHERE user_id = ? AND connected_user_id = ?',
-      [userId, targetUserId]
-    );
-  } else {
-    await executeQuery(
-      `INSERT INTO social_network.connections (
-        user_id, connected_user_id, connection_type,
-        created_at, updated_at
-      ) VALUES (?, ?, ?, toTimestamp(now()), toTimestamp(now()))`,
-      [userId, targetUserId, connectionType]
+  const result = remove
+    ? await executeQuery(
+        'DELETE FROM social_network.connections WHERE user_id = ? AND connected_user_id = ?',
+        [userId, targetUserId]
+      )
+    : await executeQuery(
+        `INSERT INTO social_network.connections (
+          user_id, connected_user_id, connection_type,
+          created_at, updated_at
+        ) VALUES (?, ?, ?, toTimestamp(now()), toTimestamp(now()))`,
+        [userId, targetUserId, connectionType]
+      );
+
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to update connection' },
+      { status: 500 }
     );
   }
 
@@ -311,27 +329,37 @@ async function handleReaction(userId: string, data: {
 }) {
   const { contentId, reactionType, remove } = data;
 
-  if (remove) {
-    await executeQuery(
-      'DELETE FROM social_network.reactions WHERE content_id = ? AND user_id = ?',
-      [contentId, userId]
-    );
-  } else {
-    await executeQuery(
-      `INSERT INTO social_network.reactions (
-        content_id, user_id, reaction_type, created_at
-      ) VALUES (?, ?, ?, toTimestamp(now()))`,
-      [contentId, userId, reactionType]
-    );
+  const result = remove
+    ? await executeQuery(
+        'DELETE FROM social_network.reactions WHERE content_id = ? AND user_id = ?',
+        [contentId, userId]
+      )
+    : await executeQuery(
+        `INSERT INTO social_network.reactions (
+          content_id, user_id, reaction_type, created_at
+        ) VALUES (?, ?, ?, toTimestamp(now()))`,
+        [contentId, userId, reactionType]
+      );
 
-    // Record activity
-    await executeQuery(
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to update reaction' },
+      { status: 500 }
+    );
+  }
+
+  if (!remove) {
+    const activityResult = await executeQuery(
       `INSERT INTO social_network.activities (
         user_id, activity_id, activity_type,
         target_id, created_at
       ) VALUES (?, ?, ?, ?, toTimestamp(now()))`,
       [userId, uuidv4(), ActivityTypes.LIKE, contentId]
     );
+
+    if (!activityResult.success) {
+      console.error('Failed to record reaction activity:', activityResult.error);
+    }
   }
 
   return NextResponse.json({ success: true });
@@ -347,7 +375,7 @@ async function handleComment(userId: string, data: {
   const activityId = uuidv4();
   const timestamp = new Date();
 
-  await executeQuery(
+  const result = await executeQuery(
     `INSERT INTO social_network.activities (
       user_id, activity_id, activity_type,
       target_id, created_at, content,
@@ -363,6 +391,13 @@ async function handleComment(userId: string, data: {
       mediaUrls || []
     ]
   );
+
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to create comment' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     commentId: activityId,
@@ -380,7 +415,7 @@ async function handleShare(userId: string, data: {
   const activityId = uuidv4();
   const timestamp = new Date();
 
-  await executeQuery(
+  const activityResult = await executeQuery(
     `INSERT INTO social_network.activities (
       user_id, activity_id, activity_type,
       target_id, created_at, content
@@ -395,17 +430,23 @@ async function handleShare(userId: string, data: {
     ]
   );
 
+  if (!activityResult.success) {
+    return NextResponse.json(
+      { error: activityResult.error || 'Failed to record share activity' },
+      { status: 500 }
+    );
+  }
+
   // Update share count
-  if (shareType === 'post') {
-    await executeQuery(
-      'UPDATE social_network.posts SET shares = shares + 1 WHERE id = ?',
-      [contentId]
-    );
-  } else {
-    await executeQuery(
-      'UPDATE social_network.reels SET shares = shares + 1 WHERE id = ?',
-      [contentId]
-    );
+  const updateResult = await executeQuery(
+    shareType === 'post'
+      ? 'UPDATE social_network.posts SET shares = shares + 1 WHERE id = ?'
+      : 'UPDATE social_network.reels SET shares = shares + 1 WHERE id = ?',
+    [contentId]
+  );
+
+  if (!updateResult.success) {
+    console.error('Failed to update share count:', updateResult.error);
   }
 
   return NextResponse.json({
@@ -426,6 +467,13 @@ async function handleGetFeed(userId: string, params: {
     'SELECT connected_user_id FROM social_network.connections WHERE user_id = ?',
     [userId]
   );
+
+  if (!connections.success) {
+    return NextResponse.json(
+      { error: connections.error || 'Failed to fetch connections' },
+      { status: 500 }
+    );
+  }
 
   const followedUsers = [userId, ...connections.rows.map(row => row.connected_user_id)];
 
@@ -450,10 +498,16 @@ async function handleGetFeed(userId: string, params: {
   queryParams.push(limit);
 
   const result = await executeQuery(query, queryParams);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to fetch feed' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     posts: result.rows,
-    hasMore: result.rowLength === limit
+    hasMore: result.rows.length === limit
   });
 }
 
@@ -479,10 +533,16 @@ async function handleGetReels(userId: string, params: {
   queryParams.push(limit);
 
   const result = await executeQuery(query, queryParams);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to fetch reels' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     reels: result.rows,
-    hasMore: result.rowLength === limit
+    hasMore: result.rows.length === limit
   });
 }
 
@@ -504,6 +564,12 @@ async function handleGetConnections(userId: string, params: {
   }
 
   const result = await executeQuery(query, queryParams);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to fetch connections' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     connections: result.rows
@@ -532,9 +598,15 @@ async function handleGetActivities(userId: string, params: {
   queryParams.push(limit);
 
   const result = await executeQuery(query, queryParams);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error || 'Failed to fetch activities' },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     activities: result.rows,
-    hasMore: result.rowLength === limit
+    hasMore: result.rows.length === limit
   });
 }

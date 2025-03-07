@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { MLStoriesAnalysis } from "@/lib/types"
+import { MLStoriesAnalysis, Story, ClientStory, StoryItem, ApiResponse } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/ui/use-toast"
@@ -12,25 +12,25 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useTranslation } from "@/contexts/translation-context"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Story, ClientStory, StoryItem } from '@/lib/types'
+import { useStory } from "../context/story-context"
+import { StoryViewer } from "./story-viewer"
 
-interface APIResponse {
-  success: boolean
-  stories: (Story & { username: string })[]
-}
-
-interface StoriesProps {
+export interface StoriesProps {
+  stories: Story[];
+  userId?: string;
+  onError?: (error: string) => void;
   mlAnalysis?: MLStoriesAnalysis;
 }
 
-export function Stories({ mlAnalysis }: StoriesProps) {
-  const [stories, setStories] = useState<ClientStory[]>([])
+export function Stories({ stories, userId, onError, mlAnalysis }: StoriesProps) {
+  const [clientStories, setClientStories] = useState<ClientStory[]>([])
   const [loading, setLoading] = useState(true)
   const [videoReady, setVideoReady] = useState(false)
   const { toast } = useToast()
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { translate, currentLanguage } = useTranslation()
+  const { currentStory, setCurrentStory } = useStory()
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -65,7 +65,7 @@ export function Stories({ mlAnalysis }: StoriesProps) {
         type
       }
 
-      setStories(prev => [newStory, ...prev])
+      setClientStories(prev => [newStory, ...prev])
       
       toast({
         title: await translate("Story Added"),
@@ -93,24 +93,25 @@ export function Stories({ mlAnalysis }: StoriesProps) {
         const response = await fetch('/api/stories')
         if (!response.ok) throw new Error('Failed to fetch stories')
     
-        const data = await response.json() as APIResponse
-        const transformedStories: ClientStory[] = data.stories
-          .map((story) => {
-            const clientStory: ClientStory = {
-              id: Number(story.id),
-              username: story.username,
-              userImage: story.userImage || '/placeholder-user.jpg',
-              storyImage: story.mediaUrl,
-              isViewed: story.isViewed || false,
-              isPremium: story.isPremium || false,
-              duration: story.duration || 5,
-              type: story.type
-            }
-            return clientStory
-          })
-          .filter((story): story is ClientStory => story !== null)
+        const data = await response.json() as ApiResponse<{ stories: Story[] }>
+        if (!data.success || !data.data) {
+          throw new Error(data.error || 'Failed to fetch stories');
+        }
     
-        setStories(transformedStories)
+        const transformedStories: ClientStory[] = data.data.stories
+          .map((story: Story) => ({
+            id: Number(story.id),
+            username: story.username,
+            userImage: story.userImage || '/placeholder-user.jpg',
+            storyImage: story.mediaUrl,
+            isViewed: story.isViewed || false,
+            isPremium: story.isPremium || false,
+            duration: story.duration || 5,
+            type: story.type
+          }))
+          .filter((story: ClientStory | null): story is ClientStory => story !== null)
+    
+        setClientStories(transformedStories)
       } catch (error) {
         console.error("Error fetching stories:", error)
         toast({
@@ -141,7 +142,7 @@ export function Stories({ mlAnalysis }: StoriesProps) {
     setIsMuted(false)
     setSelectedStory(story)
 
-    setStories(prev =>
+    setClientStories(prev =>
       prev.map(s => s.id === story.id ? { ...s, isViewed: true } : s)
     )
   }
@@ -158,9 +159,9 @@ export function Stories({ mlAnalysis }: StoriesProps) {
   const handleNext = () => {
     if (!selectedStory) return
 
-    const currentIndex = stories.findIndex(s => s.id === selectedStory.id)
-    if (currentIndex < stories.length - 1) {
-      handleStoryClick(stories[currentIndex + 1])
+    const currentIndex = clientStories.findIndex(s => s.id === selectedStory.id)
+    if (currentIndex < clientStories.length - 1) {
+      handleStoryClick(clientStories[currentIndex + 1])
     } else {
       handleClose()
     }
@@ -169,9 +170,9 @@ export function Stories({ mlAnalysis }: StoriesProps) {
   const handlePrevious = () => {
     if (!selectedStory) return
 
-    const currentIndex = stories.findIndex(s => s.id === selectedStory.id)
+    const currentIndex = clientStories.findIndex(s => s.id === selectedStory.id)
     if (currentIndex > 0) {
-      handleStoryClick(stories[currentIndex - 1])
+      handleStoryClick(clientStories[currentIndex - 1])
     }
   }
 
@@ -249,7 +250,7 @@ export function Stories({ mlAnalysis }: StoriesProps) {
       ) : (
         <Card className="p-4 mb-4 relative">
           <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 px-1">
-            {stories.map((story) => (
+            {clientStories.map((story) => (
               <motion.div
                 key={story.id}
                 whileHover={{ scale: 1.05 }}

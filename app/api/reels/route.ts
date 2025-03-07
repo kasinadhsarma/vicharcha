@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getStories as getReels, createReel } from '@/lib/db/db';
+import { getReels, createReel } from '@/lib/db/db';
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,8 +41,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ 
-      reelId, 
-      created: true 
+      success: true,
+      reelId,
+      message: 'Reel created successfully'
     });
   } catch (error) {
     console.error('Error creating reel:', error);

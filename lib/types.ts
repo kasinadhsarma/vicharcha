@@ -81,30 +81,50 @@ export interface Attachment {
 }
 
 export interface Story {
-  id: string;
-  content: string;
-  authorId: string;
-  author?: User;
-  createdAt: string;
-  expiresAt: string;
-  type: 'text' | 'image' | 'video';
-  media?: {
-    url: string;
-    type: 'image' | 'video';
-  };
+  id: number;
+  userId: string;
   username: string;
   userImage: string;
-  isPremium: boolean;
-  isViewed: boolean;
   mediaUrl: string;
+  type: 'video' | 'image';
+  duration: number;
+  isViewed: boolean;
+  isPremium: boolean;
+  expiresAt: Date;
+  createdAt: Date;
   downloadable: boolean;
-  userStatus?: 'online' | 'offline';
-  profileUrl?: string;
-  reactions?: {
-    count: number;
-    type: string;
-  }[];
-  duration?: number; // Duration of the story in seconds
+  isAdult: boolean;
+  category: string;
+  items: StoryItem[];
+}
+
+export interface StoryItem {
+  id: string;
+  type: 'text' | 'sticker' | 'gif' | 'link';
+  content: string;
+  position: { x: number; y: number };
+  style?: Record<string, string | number>;
+}
+
+export interface ClientStory {
+  id: number;
+  username: string;
+  userImage: string;
+  storyImage: string;
+  isViewed: boolean;
+  isPremium: boolean;
+  duration: number;
+  type: 'image' | 'video';
+}
+
+export interface MLStoriesAnalysis {
+  isAdult: boolean;
+  topics: string[];
+  sentiments: {
+    positive: number;
+    negative: number;
+    neutral: number;
+  };
 }
 
 export interface Comment {
@@ -125,19 +145,18 @@ export interface Reaction {
   createdAt: string;
 }
 
-export interface ApiResponse<T = unknown> {
+export interface ApiResponse<T = any> {
   success: boolean;
-  message?: string;
   data?: T;
   error?: string;
 }
 
-export interface DatabaseResult<T = unknown, R = T> {
+export interface DatabaseResult<T = any> {
   success: boolean;
   data?: T;
   error?: string;
+  rows?: T[];
   count?: number;
-  rows?: R[];
 }
 
 // Common database response types

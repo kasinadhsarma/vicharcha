@@ -99,7 +99,7 @@ async function handleSignup(data: {
     [data.username, data.email]
   );
 
-  if (existingUser.rowLength > 0) {
+  if ((existingUser.rows?.length ?? 0) > 0) {
     return NextResponse.json(
       { error: 'Username or email already exists' },
       { status: 409 }
@@ -136,7 +136,14 @@ async function handleLogin(data: { username: string; password: string }) {
     [data.username]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows?.length === 0) {
+    return NextResponse.json(
+      { error: 'Invalid credentials' },
+      { status: 401 }
+    );
+  }
+
+  if (!result.rows) {
     return NextResponse.json(
       { error: 'Invalid credentials' },
       { status: 401 }
@@ -244,7 +251,14 @@ async function handleVerifyToken(req: NextRequest) {
     [payload.userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows?.length === 0) {
+    return NextResponse.json(
+      { error: 'User not found' },
+      { status: 404 }
+    );
+  }
+
+  if (!result.rows) {
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }

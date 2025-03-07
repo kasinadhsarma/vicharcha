@@ -7,20 +7,19 @@ import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Clock, TrendingUp, Star, Users, Filter, MessageSquare, Share } from "lucide-react";
-import { CreatePost } from "./create-post/page";
-import { Post } from "../../lib/types";
-import StoriesPage from "./stories/page";
+import { CreatePostForm } from "./components/create-post-form";
+import { Post } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { FeedStories } from "./components/feed-stories";
 
 const categoryFilters: string[] = ["all", "general", "news", "entertainment", "sports", "technology", "politics"];
 
 interface MainContentProps {
   category: string;
-  showStories?: boolean;
 }
 
-function MainContent({ category, showStories = false }: MainContentProps) {
+function MainContent({ category }: MainContentProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
@@ -77,6 +76,12 @@ function MainContent({ category, showStories = false }: MainContentProps) {
   if (loading) {
     return (
       <div className="w-full max-w-3xl mx-auto p-4 space-y-4">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-violet-500/10 rounded-xl blur-xl" />
+          <Card className="relative border bg-card/50 backdrop-blur-sm p-4">
+            <Skeleton className="h-20 w-full" />
+          </Card>
+        </div>
         {[1, 2, 3].map((i) => (
           <div key={i} className="w-full space-y-4">
             <div className="flex items-center gap-3">
@@ -99,9 +104,9 @@ function MainContent({ category, showStories = false }: MainContentProps) {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-        {showStories && <StoriesPage />}
-        <CreatePost onPostCreated={async () => setLoading(true)} initialCategory={category} />
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b space-y-4">
+        <FeedStories />
+        <CreatePostForm onPostCreated={async () => setLoading(true)} initialCategory={category} />
 
         <div className="flex flex-wrap items-center justify-between gap-4 p-4">
           <div className="flex flex-wrap gap-2">
@@ -248,5 +253,5 @@ function MainContent({ category, showStories = false }: MainContentProps) {
 }
 
 export default function FeedPage() {
-  return <MainContent category="all" showStories={true} />;
+  return <MainContent category="all" />;
 }

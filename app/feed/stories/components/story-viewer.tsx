@@ -1,291 +1,213 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Download, Pause, Play, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { cn } from "@/lib/utils";
 import { Story } from "@/lib/types";
-import { motion } from "framer-motion";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { ChevronLeft, ChevronRight, X, Heart, MessageCircle, Share2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface StoryViewerProps {
   stories: Story[];
-  initialStoryIndex: number;
+  currentIndex: number;
   onClose: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
 }
 
-export function StoryViewer({ stories, initialStoryIndex, onClose }: StoryViewerProps) {
-  const [currentIndex, setCurrentIndex] = useState(initialStoryIndex);
+export function StoryViewer({ stories, currentIndex, onClose, onNext, onPrevious }: StoryViewerProps) {
   const [progress, setProgress] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const progressInterval = useRef<NodeJS.Timeout>();
+  const story = stories[currentIndex];
   const { toast } = useToast();
 
-  const currentStory = stories[currentIndex];
-
-  // Reset video and progress when story changes
   useEffect(() => {
+    if (!story) return;
+
+    // Mark story as viewed
+    fetch(`/api/stories/${story.id}/view`, { method: 'POST' })
+      .catch(error => console.error('Error marking story as viewed:', error));
+
+    // Reset and start progress
     setProgress(0);
-    setIsPlaying(true);
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(console.error);
-    }
-  }, [currentIndex]);
+    setIsPaused(false);
 
-  const handleNext = useCallback(() => {
-    if (currentIndex < stories.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-    } else {
-      onClose();
-    }
-  }, [currentIndex, stories.length, onClose]);
+    const duration = story.duration || 5000; // Default to 5 seconds if not specified
+    const interval = 50; // Update every 50ms for smooth progress
+    const increment = (interval / duration) * 100;
 
-  useEffect(() => {
-    if (!currentStory) return;
-
-    let timer: NodeJS.Timeout;
-    
-    if (currentStory.type === 'image') {
-      const duration = 5000; // 5 seconds for images
-      const interval = 100; // Update progress every 100ms
-      const steps = duration / interval;
-      let currentStep = 0;
-
-      timer = setInterval(() => {
-        if (isPlaying) {
-          currentStep++;
-          setProgress((currentStep / steps) * 100);
-
-          if (currentStep >= steps) {
-            handleNext();
+    progressInterval.current = setInterval(() => {
+      if (!isPaused) {
+        setProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval.current);
+            onNext();
+            return 0;
           }
-        }
-      }, interval);
-    }
+          return prev + increment;
+        });
+      }
+    }, interval);
 
     return () => {
-      if (timer) clearInterval(timer);
+      if (progressInterval.current) {
+        clearInterval(progressInterval.current);
+      }
     };
-  }, [currentStory, isPlaying, handleNext]);
+  }, [story, currentIndex, isPaused, onNext]);
 
-  const handleVideoTimeUpdate = () => {
-    if (videoRef.current) {
-      const duration = videoRef.current.duration;
-      const currentTime = videoRef.current.currentTime;
-      setProgress((currentTime / duration) * 100);
-      
-      if (currentTime >= duration) {
-        handleNext();
-      }
+  if (!story) return null;
+
+  const handleTouchStart = (side: 'left' | 'right') => {
+    setIsPaused(true);
+    if (side === 'left') {
+      onPrevious();
+    } else {
+      onNext();
     }
   };
 
-  const handleVideoError = (error: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    console.error('Video error:', error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to play video"
-    });
+  const handleTouchEnd = () => {
+    setIsPaused(false);
   };
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-    }
-  };
-
-  const togglePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play().catch(console.error);
-      }
-      setIsPlaying(!isPlaying);
+  const handleLike = async () => {
+    try {
+      await fetch(`/api/stories/${story.id}/like`, { method: 'POST' });
+      toast({
+        title: "Success",
+        description: "Story liked!",
+      });
+    } catch (error) {
+      console.error('Error liking story:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to like story",
+      });
     }
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-[450px] h-[90vh] p-0 overflow-hidden bg-background border-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full h-full bg-black/95 dark:bg-black overflow-hidden rounded-lg"
-        >
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-screen-lg w-full h-[80vh] p-0 gap-0 bg-transparent border-none">
+        <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
           {/* Progress bars */}
-          <div className="absolute top-0 left-0 right-0 z-20 p-2 flex gap-1">
-            {stories.map((story, index) => (
-              <div key={story.id} className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-white rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{
-                    width: index < currentIndex ? "100%" :
-                           index === currentIndex ? `${progress}%` : "0%"
-                  }}
-                  transition={{ duration: 0.1 }}
+          <div className="absolute top-0 left-0 right-0 z-50 flex gap-1 p-2">
+            {stories.map((_, i) => (
+              <div
+                key={i}
+                className="h-1 flex-1 bg-white/20 rounded-full overflow-hidden"
+              >
+                <div
+                  className={cn(
+                    "h-full bg-white transition-all duration-100",
+                    i < currentIndex ? "w-full" : i === currentIndex ? `w-[${progress}%]` : "w-0"
+                  )}
                 />
               </div>
             ))}
           </div>
 
-          {/* Story content with fade transitions */}
-          <motion.div
-            key={currentStory.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="relative w-full h-full"
-          >
-            {currentStory.type === 'video' ? (
-              <video
-                ref={videoRef}
-                src={currentStory.mediaUrl}
-                className="w-full h-full object-contain"
-                playsInline
-                onTimeUpdate={handleVideoTimeUpdate}
-                onError={handleVideoError}
-                muted
-                onClick={togglePlayPause}
-              />
-            ) : (
-              <div className="relative w-full h-full">
-                <Image
-                  src={currentStory.mediaUrl}
-                  alt={currentStory.username || "Story"}
-                  fill
-                  className="object-contain"
-                  onClick={togglePlayPause}
-                />
-              </div>
-            )}
-
-            {/* Overlay controls */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50 dark:from-black/60 dark:to-black/60">
-              {/* Header */}
-              <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border-2 border-white/20">
-                    <AvatarImage src={currentStory.userImage} />
-                    <AvatarFallback>{currentStory.username?.[0] ?? '?'}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col">
-                    <span className="text-white font-medium">{currentStory.username}</span>
-                    <span className="text-white/70 text-sm">
-                      {new Date(currentStory.createdAt).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-                
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-white/20"
-                  onClick={onClose}
-                >
-                  <X className="h-6 w-6" />
-                </Button>
-              </div>
-
-              {/* Navigation and controls */}
-              <div className="absolute inset-0 flex items-center justify-between px-4 z-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-black/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePrevious();
-                  }}
-                  disabled={currentIndex === 0}
-                >
-                  <ChevronLeft className="h-8 w-8" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-white hover:bg-black/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleNext();
-                  }}
-                  disabled={currentIndex === stories.length - 1}
-                >
-                  <ChevronRight className="h-8 w-8" />
-                </Button>
-              </div>
-
-              {/* Play/Pause and Download buttons */}
-              <div className="absolute bottom-4 right-4 flex gap-2 z-10">
-                {currentStory.type === 'video' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-black/20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      togglePlayPause();
-                    }}
-                  >
-                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                  </Button>
-                )}
-                {currentStory.downloadable && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white hover:bg-black/20"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (isDownloading) return;
-                      
-                      setIsDownloading(true);
-                      try {
-                        const response = await fetch(`/api/stories/download?storyId=${currentStory.id}`);
-                        if (!response.ok) throw new Error('Failed to get download URL');
-                        
-                        const data = await response.json();
-                        if (!data.success) throw new Error(data.error);
-                        
-                        const link = document.createElement('a');
-                        link.href = currentStory.mediaUrl;
-                        link.download = `story-${currentStory.id}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        toast({
-                          title: "Success",
-                          description: "Download started successfully"
-                        });
-                      } catch (error) {
-                        console.error('Download error:', error);
-                        toast({
-                          variant: "destructive",
-                          title: "Error",
-                          description: "Failed to download story"
-                        });
-                      } finally {
-                        setIsDownloading(false);
-                      }
-                    }}
-                    disabled={isDownloading}
-                  >
-                    <Download className={cn("h-6 w-6", isDownloading && "animate-pulse")} />
-                  </Button>
-                )}
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between p-4 pt-8">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 border-2 border-white">
+                <AvatarImage src={story.userImage} alt={story.username} />
+                <AvatarFallback>{story.username[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-white font-medium">{story.username}</p>
+                <p className="text-white/70 text-sm">
+                  {new Date(story.createdAt).toLocaleTimeString()}
+                </p>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20"
+              onClick={onClose}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+
+          {/* Story Content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={story.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.2 }}
+              className="w-full h-full flex items-center justify-center"
+            >
+              {story.type === 'video' ? (
+                <video
+                  src={story.mediaUrl}
+                  className="w-full h-full object-contain"
+                  autoPlay
+                  playsInline
+                  muted
+                  loop
+                />
+              ) : (
+                <img
+                  src={story.mediaUrl}
+                  alt={story.username + "'s story"}
+                  className="w-full h-full object-contain"
+                />
+              )}
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Buttons */}
+          <div className="absolute inset-0 z-40 flex">
+            <button
+              className="w-1/2 h-full focus:outline-none"
+              onClick={() => onPrevious()}
+              onTouchStart={() => handleTouchStart('left')}
+              onTouchEnd={handleTouchEnd}
+            />
+            <button
+              className="w-1/2 h-full focus:outline-none"
+              onClick={() => onNext()}
+              onTouchStart={() => handleTouchStart('right')}
+              onTouchEnd={handleTouchEnd}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="absolute bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-4 p-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20"
+              onClick={handleLike}
+            >
+              <Heart className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20"
+            >
+              <MessageCircle className="h-6 w-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20"
+            >
+              <Share2 className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

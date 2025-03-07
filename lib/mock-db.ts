@@ -9,6 +9,8 @@ export interface MockPost {
   ageRestricted: boolean;
   createdAt: Date;
   updatedAt: Date;
+  likes: number;
+  likedBy: string[];
 }
 
 class MockDatabase {
@@ -20,7 +22,7 @@ class MockDatabase {
       let filteredPosts = [...this.posts];
       
       // Handle category filter
-      if (params.length > 0) {
+      if (params.length > 0 && queryStr.includes('category')) {
         const category = params[0];
         filteredPosts = filteredPosts.filter(post => post.category === category);
       }
@@ -40,11 +42,27 @@ class MockDatabase {
         mediaUrls,
         ageRestricted,
         createdAt,
-        updatedAt
+        updatedAt,
+        likes: 0,
+        likedBy: []
       };
       
       this.posts.push(newPost);
       return { rows: [newPost] };
+    } else if (queryStr.includes('UPDATE') && queryStr.includes('likes')) {
+      const [postId, action, userId] = params;
+      const post = this.posts.find(p => p.id === postId);
+      
+      if (post) {
+        if (action === 'like' && !post.likedBy.includes(userId)) {
+          post.likes++;
+          post.likedBy.push(userId);
+        } else if (action === 'unlike' && post.likedBy.includes(userId)) {
+          post.likes = Math.max(0, post.likes - 1);
+          post.likedBy = post.likedBy.filter(id => id !== userId);
+        }
+        return { rows: [post] };
+      }
     }
     
     return { rows: [] };

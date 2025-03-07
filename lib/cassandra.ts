@@ -1,75 +1,73 @@
-import { Client, types, QueryOptions } from 'cassandra-driver';
-import { DatabaseResult, PostCategories } from './types';
+import cassandraDriver from 'cassandra-driver';
 
-export { PostCategories };
+const { Client } = cassandraDriver;
 
-// Initialize Cassandra client
-const client = new Client({
-  contactPoints: [process.env.CASSANDRA_CONTACT_POINT || 'localhost'],
-  localDataCenter: process.env.CASSANDRA_LOCAL_DC || 'datacenter1',
-  keyspace: process.env.CASSANDRA_KEYSPACE || 'vicharcha',
-  credentials: {
-    username: process.env.CASSANDRA_USERNAME || 'cassandra',
-    password: process.env.CASSANDRA_PASSWORD || 'cassandra'
-  }
+const cassandraHost = process.env.CASSANDRA_HOST || 'localhost';
+const cassandraKeyspace = process.env.CASSANDRA_KEYSPACE || 'social_network';
+
+export const cassandra = new Client({
+  contactPoints: [cassandraHost],
+  localDataCenter: 'datacenter1',
+  keyspace: cassandraKeyspace,
 });
 
-export async function connect() {
-  try {
-    await client.connect();
-    console.log('Connected to Cassandra');
-  } catch (error) {
-    console.error('Error connecting to Cassandra:', error);
-    throw error;
-  }
+export enum PostCategories {
+  GENERAL = 'general',
+  NEWS = 'news',
+  ENTERTAINMENT = 'entertainment',
+  SPORTS = 'sports',
+  TECHNOLOGY = 'technology',
+  POLITICS = 'politics',
+  ADULT = 'adult',
 }
 
-export async function disconnect() {
-  await client.shutdown();
-  console.log('Disconnected from Cassandra');
+export interface DatabaseResult<T = any> {
+  success: boolean;
+  error?: string;
+  rows: T[];
+  count?: number;
 }
 
-export async function executeQuery<T = types.Row>(
-  query: string,
-  params?: unknown[],
-  options: QueryOptions = { prepare: true }
-): Promise<DatabaseResult<T>> {
+export async function executeQuery<T = any>(query: string, params: any[] = []): Promise<DatabaseResult<T>> {
   try {
-    const result = await client.execute(query, params, options);
+    const result = await cassandra.execute(query, params, { prepare: true });
+    const rows = result.rows as unknown as T[];
     return {
       success: true,
-      rows: result.rows as T[],
-      count: result.rowLength
+      rows,
+      count: rows.length
     };
   } catch (error) {
-    console.error('Error executing query:', error);
+    console.error('Cassandra query error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Database error',
+      rows: [],
+      count: 0
     };
   }
 }
 
-export async function executeBatch(
-  queries: { query: string; params?: unknown[] }[],
-  options: QueryOptions = { prepare: true }
-): Promise<DatabaseResult> {
+export async function executeBatch(queries: { query: string; params: any[] }[]): Promise<DatabaseResult> {
   try {
-    await client.batch(
-      queries.map(q => ({ query: q.query, params: q.params || [] })),
-      options
-    );
+    const batch = queries.map(({ query, params }) => ({
+      query,
+      params
+    }));
+
+    await cassandra.batch(batch, { prepare: true });
     return {
       success: true,
-      count: queries.length
+      rows: [],
+      count: 0
     };
   } catch (error) {
-    console.error('Error executing batch:', error);
+    console.error('Cassandra batch error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Database error',
+      rows: [],
+      count: 0
     };
   }
 }
-
-export { client };

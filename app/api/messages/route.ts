@@ -286,6 +286,6 @@ async function handleGetMessages(userId: string, params: {
 
   return NextResponse.json({
     messages: result.rows,
-    hasMore: result.rowLength === limit
+    hasMore: result.rows.length === limit
   });
 }

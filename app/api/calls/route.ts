@@ -166,7 +166,7 @@ async function handleAnswerCall(userId: string, data: {
     [callId, userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'Call not found' },
       { status: 404 }
@@ -219,7 +219,7 @@ async function handleUpdateCallStatus(userId: string, data: {
     [callId, userId, userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'Call not found' },
       { status: 404 }
@@ -248,7 +248,7 @@ async function handleEndCall(userId: string, data: {
     [callId, userId, userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'Call not found' },
       { status: 404 }
@@ -321,7 +321,7 @@ async function handleGetCallHistory(userId: string, params: {
 
   return NextResponse.json({
     calls: result.rows,
-    hasMore: result.rowLength === limit
+    hasMore: result.rows.length === limit
   });
 }
 
@@ -335,7 +335,7 @@ async function handleGetActiveCall(userId: string) {
     [userId, userId, CallStatuses.ONGOING]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json({ activeCall: null });
   }
 

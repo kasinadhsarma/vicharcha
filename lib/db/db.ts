@@ -127,10 +127,11 @@ export async function verifyOTP(phone: string, otp: string): Promise<boolean> {
 }
 
 // Reels functionality
-export interface Reel {
+interface Reel {
   id: string;
   userId: string;
-  url: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
   caption?: string;
   likes: number;
   comments: number;
@@ -141,7 +142,14 @@ export interface Reel {
 
 const reels: Reel[] = [];
 
-export async function createReel(data: Omit<Reel, 'id' | 'likes' | 'comments' | 'shares' | 'createdAt' | 'updatedAt'>): Promise<Reel> {
+export async function getReels(userId?: string): Promise<Reel[]> {
+  if (userId) {
+    return reels.filter(reel => reel.userId === userId);
+  }
+  return reels;
+}
+
+export async function createReel(data: Omit<Reel, 'id' | 'likes' | 'comments' | 'shares' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const reel: Reel = {
     id: Math.random().toString(36).substring(7),
     ...data,
@@ -153,7 +161,7 @@ export async function createReel(data: Omit<Reel, 'id' | 'likes' | 'comments' | 
   };
   
   reels.push(reel);
-  return reel;
+  return reel.id;
 }
 
 export type { Story, StoryItem };

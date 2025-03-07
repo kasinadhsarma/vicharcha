@@ -1,63 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Story, ApiResponse } from '@/lib/types';
+import { processStoryAudio } from '@/lib/api/stories';
+import { getServerSession, auth } from '@/lib/auth';
+import { db } from '../../../lib/db';
 
 // Configure route segment config
 export const dynamic = 'force-dynamic';
-import { getStories, findUserByPhone, type Story } from '@/lib/db/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    
-    // Get stories, optionally filtered by userId
-    const stories = await getStories(userId || undefined);
-    
-    // Sort stories by creation date, newest first
-    const sortedStories = stories.sort((a: Story, b: Story) => {
-      const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
-      const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
-      return dateB.getTime() - dateA.getTime();
-    });
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Get stories with user details and format response
-    const storiesWithUserDetails = await Promise.all(sortedStories.map(async (story: Story) => {
-      let username: string, userImage: string;
-      
-      if (story.userId.startsWith('demo_user_')) {
-        username = story.userId.split('_').slice(1).join(' ').replace(/^\w/, (c: string) => c.toUpperCase());
-        userImage = '/placeholder-user.jpg';
-      } else {
-        const user = await findUserByPhone(story.userId);
-        username = user?.username || 'User';
-        userImage = '/placeholder-user.jpg';
-      }
-
-      // Check if story has expired
-      const now = new Date();
-      if (story.expiresAt instanceof Date && now > story.expiresAt) {
-        return null; // Skip expired stories
-      }
-
-      return {
-        ...story,
-        username,
-        userImage,
-        timeLeft: story.expiresAt instanceof Date ? 
-          Math.max(0, story.expiresAt.getTime() - now.getTime()) : 0
-      };
-    }));
-
-    // Filter out null values (expired stories) and ensure array is not empty
-    const validStories = storiesWithUserDetails.filter(story => story !== null);
-    
-    return NextResponse.json({
-      success: true,
-      stories: validStories
-    });
+    const stories = await db.stories.getAll(session.user.id);
+    return NextResponse.json({ success: true, data: stories });
   } catch (error) {
     console.error('Error fetching stories:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch stories' },
+      { success: false, error: 'Failed to fetch stories' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const settings = JSON.parse(formData.get('settings') as string);
+
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      );
+    }
+
+    // Process and store the file
+    const story = await db.stories.create({
+      userId: session.user.id,
+      username: session.user.name || 'Anonymous',
+      userImage: session.user.image || '/placeholder.jpg',
+      mediaUrl: '/temp-url', // Replace with actual upload URL
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+      duration: settings.duration || 5000,
+      isPremium: settings.isPremium || false,
+      isAdult: settings.isAdult || false,
+      category: settings.category || 'general',
+      items: [],
+      isViewed: false,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      createdAt: new Date(),
+      downloadable: settings.downloadable || false
+    });
+
+    return NextResponse.json({ success: true, data: story });
+  } catch (error) {
+    console.error('Error creating story:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to create story' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const storyId = searchParams.get('id');
+
+    if (!storyId) {
+      return NextResponse.json(
+        { error: 'No story ID provided' },
+        { status: 400 }
+      );
+    }
+
+    const deleted = await db.stories.delete(parseInt(storyId, 10));
+    if (!deleted) {
+      return NextResponse.json(
+        { error: 'Story not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting story:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete story' },
       { status: 500 }
     );
   }

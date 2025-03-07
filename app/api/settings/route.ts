@@ -165,7 +165,7 @@ async function handleUpdatePassword(userId: string, data: {
     [userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }
@@ -221,7 +221,7 @@ async function handleGetProfile(userId: string) {
     [userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }
@@ -239,7 +239,7 @@ async function handleGetSettings(userId: string) {
     [userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json(
       { error: 'User not found' },
       { status: 404 }
@@ -259,7 +259,7 @@ async function handleGetDigiLockerStatus(userId: string) {
     [userId]
   );
 
-  if (result.rowLength === 0) {
+  if (result.rows.length === 0) {
     return NextResponse.json({
       connected: false
     });

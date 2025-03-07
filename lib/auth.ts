@@ -1,47 +1,54 @@
-interface Session {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  };
-  expires: string;
+import { NextAuthOptions } from 'next-auth';
+import { getServerSession as getNextAuthServerSession } from 'next-auth';
+import { Session, Profile, Account } from 'next-auth';
+
+export interface AuthUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
 }
 
-// This is a placeholder auth function. In a real app, you would use a proper auth system like NextAuth.js
-export async function auth(): Promise<Session | null> {
-  // TODO: Implement real authentication
-  // For now, return a mock session
-  return {
-    user: {
-      id: "mock-user-id",
-      name: "Mock User",
-      email: "mock@example.com"
-    },
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
-  };
+interface CustomSession extends Session {
+  user: AuthUser;
 }
 
-export function getServerSession(): Promise<Session | null> {
-  return auth();
-}
-
-export const authConfig = {
+export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }: { auth: Session | null; request: { nextUrl: URL } }) {
-      const isLoggedIn = !!auth?.user;
-      const isProtected = nextUrl.pathname.startsWith('/feed') || 
-                         nextUrl.pathname.startsWith('/api/stories');
-      
-      if (isProtected && !isLoggedIn) {
-        return false;
-      }
-
+    signIn: async ({ user }) => {
+      if (!user?.email) return false;
       return true;
     },
+    session: async ({ session, user }): Promise<CustomSession> => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+        },
+      };
+    }
   },
-  providers: [], // Configure your auth providers here
+  providers: [], // Configure auth providers as needed
 };
+
+export async function auth() {
+  const session = await getNextAuthServerSession(authOptions);
+  return session as CustomSession | null;
+}
+
+export async function getServerSession(): Promise<CustomSession | null> {
+  const session = await getNextAuthServerSession(authOptions);
+  return session as CustomSession | null;
+}
+
+export async function getAuthUser(): Promise<AuthUser | null> {
+  const session = await getServerSession();
+  return session?.user || null;
+}
+
+// Re-export for compatibility
+export const getAuth = auth;
