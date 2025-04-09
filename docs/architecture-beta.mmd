@@ -1,0 +1,21 @@
+architecture-beta
+    group backend(cloud)[Python FastAPI Backend]
+        service api(server)[FastAPI Server] in backend
+        service db(database)[PostgreSQL] in backend
+        service redis(database)[Redis Cache] in backend
+        service auth(server)[Auth Service] in backend
+        service media(disk)[Media Storage] in backend
+        
+        db:R -- L:api
+        redis:T -- B:api
+        auth:L -- R:api
+        media:T -- B:api
+
+    group services(cloud)[External Services]
+        service giphy(internet)[Giphy API] in services
+        service s3(disk)[S3 Storage] in services
+        service digilocker(internet)[DigiLocker API] in services
+
+        giphy:L -- R:api
+        s3:T -- B:media
+        digilocker:L -- R:auth
