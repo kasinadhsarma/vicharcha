@@ -1,0 +1,98 @@
+flowchart TB
+    subgraph Content["Content Layer"]
+        Posts["Posts Service"]
+        Images["Images Service"]
+        Reels["Reels Service"]
+        Messages["Messages Service"]
+        Jobs["Jobs Service"]
+        Research["Research Articles"]
+    end
+
+    subgraph AIAgent["AI Agent System"]
+        direction TB
+        ContentQueue["Content Queue\n(RabbitMQ/Kafka)"]
+        
+        subgraph Analysis["Analysis Engine"]
+            TextAnalysis["Text Analysis\n(BERT/RoBERTa)"]
+            ImageAnalysis["Image Analysis\n(VGG/ResNet)"]
+            VideoAnalysis["Video Analysis\n(3D-CNN)"]
+            CallAnalysis["Call Analysis\n(Speech-to-Text)"]
+            JobAnalysis["Job Matching\n(BERT/Word2Vec)"]
+            ResearchAnalysis["Research Analysis\n(SciBERT/Longformer)"]
+        end
+        
+        ResultsAggregator["Results Aggregator"]
+        
+        subgraph Rules["Rules Engine"]
+            SpamDetector["Spam Detection"]
+            ScamDetector["Scam Detection"]
+            InappropriateContent["Inappropriate\nContent Detection"]
+            JobMatcher["Job Matching Rules"]
+            ResearchValidator["Research Validation"]
+        end
+        
+        ConfidenceScorer["Confidence Scorer"]
+    end
+    
+    subgraph Review["Review System"]
+        ReviewQueue["Review Queue"]
+        CompanyDashboard["Company Dashboard"]
+    end
+    
+    subgraph Actions["Action System"]
+        BlockingService["Blocking Service"]
+        NotificationService["Notification Service"]
+        UserDatabase["User Database"]
+        JobRecommender["Job Recommender"]
+        ResearchMatcher["Research Matcher"]
+        CallScheduler["Call Scheduler"]
+    end
+
+    subgraph Communication["Communication System"]
+        CallService["Call Service"]
+        MessageRouter["Message Router"]
+        P2PConnection["P2P Connection Handler"]
+    end
+
+    %% Content Flow
+    Posts --> ContentQueue
+    Images --> ContentQueue
+    Reels --> ContentQueue
+    Messages --> ContentQueue
+    Jobs --> ContentQueue
+    Research --> ContentQueue
+    
+    %% Analysis Flow
+    ContentQueue --> Analysis
+    TextAnalysis --> ResultsAggregator
+    ImageAnalysis --> ResultsAggregator
+    VideoAnalysis --> ResultsAggregator
+    CallAnalysis --> ResultsAggregator
+    JobAnalysis --> ResultsAggregator
+    ResearchAnalysis --> ResultsAggregator
+    
+    %% Rules Processing
+    ResultsAggregator --> Rules
+    SpamDetector --> ConfidenceScorer
+    ScamDetector --> ConfidenceScorer
+    InappropriateContent --> ConfidenceScorer
+    JobMatcher --> ConfidenceScorer
+    ResearchValidator --> ConfidenceScorer
+    
+    %% Review Flow
+    ConfidenceScorer --> ReviewQueue
+    ReviewQueue --> CompanyDashboard
+    
+    %% Action Flow
+    CompanyDashboard --> BlockingService
+    BlockingService --> UserDatabase
+    BlockingService --> NotificationService
+    
+    %% Communication Flow
+    MessageRouter --> P2PConnection
+    CallService --> P2PConnection
+    P2PConnection --> Communication
+    
+    %% Job and Research Flow
+    JobRecommender --> NotificationService
+    ResearchMatcher --> NotificationService
